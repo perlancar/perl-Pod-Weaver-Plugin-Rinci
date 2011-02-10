@@ -11,6 +11,10 @@ use Pod::Elemental::Element::Nested;
 use Pod::Elemental::Element::Pod5::Verbatim;
 use Sub::Spec::Pod qw(gen_pod);
 
+=for Pod::Coverage weave_section
+
+=cut
+
 sub weave_section {
     my ($self, $document, $input) = @_;
 
