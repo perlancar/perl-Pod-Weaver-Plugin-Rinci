@@ -5,10 +5,8 @@ use 5.010;
 use Moose;
 with 'Pod::Weaver::Role::Section';
 
-use Moose::Autobox;
 use Pod::Elemental;
 use Pod::Elemental::Element::Nested;
-use Pod::Elemental::Element::Pod5::Verbatim;
 use Sub::Spec::Pod qw(gen_pod);
 
 =for Pod::Coverage weave_section
@@ -53,7 +51,7 @@ sub weave_section {
             children => Pod::Elemental->read_string($2)->children,
         });
         $self->log(["adding spec POD for %s", $filename]);
-        $funcs_section->children->push($fpara);
+        push @{ $funcs_section->children }, $fpara;
     }
 }
 
