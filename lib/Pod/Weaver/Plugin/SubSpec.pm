@@ -32,6 +32,8 @@ sub weave_section {
         return;
     }
 
+    unshift @INC, "lib" unless 'lib' =~ @INC;
+
     # find the FUNCTIONS section in the POD
     my $funcs_section;
     for my $i (0 .. $#{ $input->{pod_document}->children }) {
