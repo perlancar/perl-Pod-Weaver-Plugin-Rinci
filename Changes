@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-SubSpec
 
+0.04    2011-08-24
+
+        No functional changes. Update with rename of Sub::Spec::Pod to
+        Sub::Spec::To::Pod.
+
+
 0.03    2011-04-15
 
         [ENHANCEMENTS]
