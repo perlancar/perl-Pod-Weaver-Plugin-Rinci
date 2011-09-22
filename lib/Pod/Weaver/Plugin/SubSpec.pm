@@ -44,7 +44,7 @@ sub weave_section {
         last;
     }
     unless ($funcs_section) {
-        #$self->log(["skipped file %s (no =head1 FUNCTIONS)", $filename]);
+        $self->log(["skipped file %s (no =head1 FUNCTIONS)", $filename]);
         $log->debugf("skipped file %s (no =head1 FUNCTIONS)");
         return;
     }

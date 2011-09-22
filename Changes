@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-SubSpec
 
+0.05    2011-09-22
+
+        No functional changes. To help debugging, enable logging when a file is
+        skipped because there is no "=head1 FUNCTIONS" section.
+
+
 0.04    2011-08-24
 
         No functional changes. Update with rename of Sub::Spec::Pod to
