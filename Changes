@@ -1,5 +1,10 @@
 Revision history for Pod-Weaver-Plugin-SubSpec
 
+0.06    2011-09-22
+
+        No functional changes. Fix log message.
+
+
 0.05    2011-09-22
 
         No functional changes. To help debugging, enable logging when a file is
