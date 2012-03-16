@@ -12,6 +12,16 @@ use Pod::Elemental::Element::Nested;
 
 # VERSION
 
+# regex
+has exclude_modules => (
+    is => 'rw',
+    isa => 'Str',
+);
+has exclude_files => (
+    is => 'rw',
+    isa => 'Str',
+);
+
 sub weave_section {
     $log->trace("-> ".__PACKAGE__."::weave_section()");
     my ($self, $document, $input) = @_;
@@ -27,6 +37,27 @@ sub weave_section {
         #$self->log(["skipped file %s (not a Perl module)", $filename]);
         $log->debugf("skipped file %s (not a Perl module)", $filename);
         return;
+    }
+
+    if (defined $self->exclude_files) {
+        my $re = $self->exclude_files;
+        eval { $re = qr/$re/ };
+        $@ and die "Invalid regex in exclude_files: $re";
+        if ($filename =~ $re) {
+            $self->log (["skipped file %s (matched exclude_files)", $filename]);
+            $log->debugf("skipped file %s (matched exclude_files)", $filename);
+            return;
+        }
+    }
+    if (defined $self->exclude_modules) {
+        my $re = $self->exclude_modules;
+        eval { $re = qr/$re/ };
+        $@ and die "Invalid regex in exclude_modules: $re";
+        if ($package =~ $re) {
+            $self->log (["skipped package %s (matched exclude_modules)", $package]);
+            $log->debugf("skipped package %s (matched exclude_modules)", $package);
+            return;
+        }
     }
 
     unshift @INC, "lib" unless 'lib' =~ @INC;
@@ -49,8 +80,8 @@ sub weave_section {
         push @{ $input->{pod_document}->children }, $fpara;
     }
     if ($found) {
-        $self->log(["adding spec POD for %s", $filename]);
-        $log->infof("adding spec POD for %s", $filename);
+        $self->log(["adding POD sections from Rinci metadata for %s", $filename]);
+        $log->infof("adding POD sections from Rinci metadata for %s", $filename);
     }
     $log->trace("<- ".__PACKAGE__."::weave_section()");
 }
@@ -65,6 +96,8 @@ sub weave_section {
 In your C<weaver.ini>:
 
  [-Perinci]
+ ;exclude_modules = REGEX
+ ;exclude_files = REGEX
 
 
 =head1 DESCRIPTION
@@ -81,6 +114,6 @@ METHODS, =head1 VARIABLES).
 
 =head1 SEE ALSO
 
-L<Perinci::To::Pod>
+L<Perinci::To::POD>
 
 L<Pod::Weaver>
