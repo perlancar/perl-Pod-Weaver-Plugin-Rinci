@@ -62,6 +62,9 @@ sub weave_section {
 
     unshift @INC, "lib" unless 'lib' =~ @INC;
 
+    $self->log(["generating POD for %s ...", $filename]);
+    $log->infof("generating POD for %s ...", $filename);
+
     # generate the POD and insert it to FUNCTIONS section
     my $url = $package; $url =~ s!::!/!g; $url .= "/";
     my $doc = Perinci::To::POD->new(url => $url);
@@ -80,8 +83,8 @@ sub weave_section {
         push @{ $input->{pod_document}->children }, $fpara;
     }
     if ($found) {
-        $self->log(["adding POD sections from Rinci metadata for %s", $filename]);
-        $log->infof("adding POD sections from Rinci metadata for %s", $filename);
+        $self->log(["added POD sections from Rinci metadata for %s", $filename]);
+        $log->infof("added POD sections from Rinci metadata for %s", $filename);
     }
     $log->trace("<- ".__PACKAGE__."::weave_section()");
 }
