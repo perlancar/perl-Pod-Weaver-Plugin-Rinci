@@ -1,6 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
-0.07    2011-03-16 (not yet released)
+0.08    2011-03-16
+
+        Add attributes: exclude_files, exclude_modules.
+
+
+0.07    2011-03-16
 
         Rename distribution from Pod-Weaver-Plugin-SubSpec to
         Pod-Weaver-Plugin-Perinci. Now follows Rinci/Riap specification.
