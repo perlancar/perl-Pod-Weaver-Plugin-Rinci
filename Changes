@@ -1,4 +1,10 @@
-Revision history for Pod-Weaver-Plugin-SubSpec
+Revision history for Pod-Weaver-Plugin-Perinci
+
+0.07    2011-03-16 (not yet released)
+
+        Rename distribution from Pod-Weaver-Plugin-SubSpec to
+        Pod-Weaver-Plugin-Perinci. Now follows Rinci/Riap specification.
+
 
 0.06    2011-09-22
 
