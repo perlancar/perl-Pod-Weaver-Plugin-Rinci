@@ -60,7 +60,7 @@ sub weave_section {
         }
     }
 
-    unshift @INC, "lib" unless 'lib' =~ @INC;
+    local @INC = ("lib", @INC);
 
     $self->log(["generating POD for %s ...", $filename]);
     $log->infof("generating POD for %s ...", $filename);
