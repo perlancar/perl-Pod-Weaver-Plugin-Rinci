@@ -4,6 +4,7 @@ use 5.010001;
 use Moose;
 with 'Pod::Weaver::Role::Section';
 
+use List::Util qw(first);
 use Perinci::To::POD;
 use Pod::Elemental;
 use Pod::Elemental::Element::Nested;
@@ -68,12 +69,21 @@ sub weave_section {
     my $found;
     while ($pod_text =~ /^=head1 ([^\n]+)\n(.+?)(?=^=head1|\z)/msg) {
         $found++;
-        my $fpara = Pod::Elemental::Element::Nested->new({
+        my ($sectname, $sectcontent) = ($1, $2);
+        my $elem = Pod::Elemental::Element::Nested->new({
             command  => 'head1',
-            content  => $1,
-            children => Pod::Elemental->read_string($2)->children,
+            content  => $sectname,
+            children => Pod::Elemental->read_string($sectcontent)->children,
         });
-        push @{ $input->{pod_document}->children }, $fpara;
+        my $sect = first {
+            $_->can('command') && $_->command eq 'head1' &&
+                uc($_->{content}) eq uc($sectname) } @{ $document->children };
+        # if existing section exists, append it
+        if ($sect) {
+            push @{ $sect->children }, @{ $elem->children };
+        } else {
+            push @{ $document->children }, $elem;
+        }
     }
     if ($found) {
         $self->log(["added POD sections from Rinci metadata for %s", $filename]);
