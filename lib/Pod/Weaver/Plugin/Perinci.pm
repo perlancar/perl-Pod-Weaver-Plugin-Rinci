@@ -77,7 +77,8 @@ sub weave_section {
         });
         my $sect = first {
             $_->can('command') && $_->command eq 'head1' &&
-                uc($_->{content}) eq uc($sectname) } @{ $document->children };
+                uc($_->{content}) eq uc($sectname) }
+            @{ $document->children }, @{ $input->{pod_document}->children };
         # if existing section exists, append it
         if ($sect) {
             push @{ $sect->children }, @{ $elem->children };
