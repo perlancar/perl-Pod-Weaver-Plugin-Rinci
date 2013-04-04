@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.10    2013-04-04 (SHARYANTO)
+
+        - Append to existing sections (like DESCRIPTION or FUNCTIONS) instead of
+          creating another section.
+
+
 0.09    2012-11-05 (SHARYANTO)
 
         No functional changes. Make sure "lib" is at the front of @INC.
