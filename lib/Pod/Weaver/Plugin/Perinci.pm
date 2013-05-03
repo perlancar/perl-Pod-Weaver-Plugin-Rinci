@@ -57,7 +57,7 @@ sub weave_section {
 
     local @INC = ("lib", @INC);
 
-    $self->log_debug(["generating POD for %s ...", $filename]);
+    $self->log(["generating POD for %s ...", $filename]);
 
     # generate the POD and insert it to FUNCTIONS section
     my $url = $package; $url =~ s!::!/!g; $url .= "/";
@@ -80,8 +80,14 @@ sub weave_section {
                 uc($_->{content}) eq uc($sectname) }
             @{ $document->children }, @{ $input->{pod_document}->children };
         # if existing section exists, append it
+        #$self->log(["sect=%s", $sect]);
         if ($sect) {
-            push @{ $sect->children }, @{ $elem->children };
+            # sometimes we get a Pod::Elemental::Element::Pod5::Command (e.g.
+            # empty "=head1 DESCRIPTION") instead of a
+            # Pod::Elemental::Element::Nested. in that case, just ignore it.
+            if ($sect->can('children')) {
+                push @{ $sect->children }, @{ $elem->children };
+            }
         } else {
             push @{ $document->children }, $elem;
         }
