@@ -64,7 +64,7 @@ sub weave_section {
     my $doc = Perinci::To::POD->new(url => $url);
     $doc->delete_doc_section('summary'); # already handled by other plugins
     $doc->delete_doc_section('version'); # ditto
-    my $pod_text = $doc->generate_doc;
+    my $pod_text = $doc->gen_doc;
 
     my $found;
     while ($pod_text =~ /^=head1 ([^\n]+)\n(.+?)(?=^=head1|\z)/msg) {
