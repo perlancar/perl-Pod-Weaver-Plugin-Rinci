@@ -18,35 +18,35 @@ Revision history for Pod-Weaver-Plugin-Perinci
 
 0.09    2012-11-05 (SHARYANTO)
 
-        No functional changes. Make sure "lib" is at the front of @INC.
+        - No functional changes. Make sure "lib" is at the front of @INC.
 
 
 0.08    2011-03-16 (SHARYANTO)
 
-        Add attributes: exclude_files, exclude_modules.
+        - Add attributes: exclude_files, exclude_modules.
 
 
 0.07    2011-03-16 (SHARYANTO)
 
-        Rename distribution from Pod-Weaver-Plugin-SubSpec to
-        Pod-Weaver-Plugin-Perinci. Now follows Rinci/Riap specification.
+        - Rename distribution from Pod-Weaver-Plugin-SubSpec to
+          Pod-Weaver-Plugin-Perinci. Now follows Rinci/Riap specification.
 
 
 0.06    2011-09-22 (SHARYANTO)
 
-        No functional changes. Fix log message.
+        - No functional changes. Fix log message.
 
 
 0.05    2011-09-22 (SHARYANTO)
 
-        No functional changes. To help debugging, enable logging when a file is
-        skipped because there is no "=head1 FUNCTIONS" section.
+        - No functional changes. To help debugging, enable logging when a file
+          is skipped because there is no "=head1 FUNCTIONS" section.
 
 
 0.04    2011-08-24 (SHARYANTO)
 
-        No functional changes. Update with rename of Sub::Spec::Pod to
-        Sub::Spec::To::Pod.
+        - No functional changes. Update with rename of Sub::Spec::Pod to
+          Sub::Spec::To::Pod.
 
 
 0.03    2011-04-15 (SHARYANTO)
@@ -59,9 +59,9 @@ Revision history for Pod-Weaver-Plugin-Perinci
 
 0.02    2011-02-10 (SHARYANTO)
 
-        Remove unneeded 'use' statements.
+        - Remove unneeded 'use' statements.
 
 
 0.01    2011-02-10 (SHARYANTO)
 
-        First release.
+        - First release.
