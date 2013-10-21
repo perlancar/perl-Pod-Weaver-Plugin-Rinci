@@ -68,9 +68,16 @@ sub weave_section {
 
     my $found;
     while ($pod_text =~ /^=head1 ([^\n]+)\n(.+?)(?=^=head1|\z)/msg) {
+        my ($sectname, $sectcontent) = ($1, $2);
+
+        # skip inserting section if there is no text
+        next unless $sectcontent =~ /\S/;
+
+        # skip inserting FUNCTIONS if there are no functions
+        next if $sectname =~ /functions/i && $sectcontent !~ /^=head2/m;
+
         $found++;
         #$self->log(["generated POD section %s", $1]);
-        my ($sectname, $sectcontent) = ($1, $2);
         my $elem = Pod::Elemental::Element::Nested->new({
             command  => 'head1',
             content  => $sectname,
