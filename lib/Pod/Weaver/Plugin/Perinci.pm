@@ -5,11 +5,14 @@ use Moose;
 with 'Pod::Weaver::Role::Section';
 
 use List::Util qw(first);
+use Perinci::Access::Perl;
 use Perinci::To::POD;
 use Pod::Elemental;
 use Pod::Elemental::Element::Nested;
 
 # VERSION
+
+our $pa = Perinci::Access::Perl->new;
 
 # regex
 has exclude_modules => (
@@ -61,7 +64,15 @@ sub weave_section {
 
     # generate the POD and insert it to FUNCTIONS section
     my $url = $package; $url =~ s!::!/!g; $url = "pl:/$url/";
-    my $doc = Perinci::To::POD->new(url => $url);
+    my $res;
+    $res = $pa->request(meta => $url);
+    die "Can't meta $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
+    my $meta = $res->[2];
+    $res = $pa->request(child_metas => $url);
+    die "Can't child_metas $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
+    my $cmetas = $res->[2];
+    my $doc = Perinci::To::POD->new(
+        name=>$package, meta=>$meta, child_metas=>$cmetas);
     $doc->delete_doc_section('summary'); # already handled by other plugins
     $doc->delete_doc_section('version'); # ditto
     my $pod_text = $doc->gen_doc;
