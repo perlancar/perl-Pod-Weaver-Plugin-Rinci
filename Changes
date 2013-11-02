@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.13    2013-11-02 (SHARYANTO)
+
+        - Adjust to Perinci::To::POD 0.36 (no longer uses Riap protocol).
+
+        - Skip inserting section if empty.
+
+
 0.12    2013-09-08 (SHARYANTO)
 
         - Adjust to Perinci::To::POD 0.34 (pl: url scheme now required).
