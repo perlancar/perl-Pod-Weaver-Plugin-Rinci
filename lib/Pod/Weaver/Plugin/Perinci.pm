@@ -65,12 +65,27 @@ sub weave_section {
     # generate the POD and insert it to FUNCTIONS section
     my $url = $package; $url =~ s!::!/!g; $url = "pl:/$url/";
     my $res;
+
     $res = $pa->request(meta => $url);
     die "Can't meta $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
     my $meta = $res->[2];
+    my $ometa = $res->[3]{orig_meta} // {};
+    # document original metadata's args_as & result_naked, not the wrapped one.
+    for (qw/args_as result_naked/) {
+        $meta->{$_} = $ometa->{$_} if defined $ometa->{$_};
+    }
     $res = $pa->request(child_metas => $url);
     die "Can't child_metas $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
     my $cmetas = $res->[2];
+    my $ometas = $res->[3]{orig_metas} // {};
+    # document original metadata's args_as & result_naked, not the wrapped one.
+    for my $uri (keys %$cmetas) {
+        for (qw/args_as result_naked/) {
+            $cmetas->{$uri}{$_} = $ometas->{$uri}{$_}
+                if defined $ometas->{$uri}{$_};
+        }
+    }
+
     my $doc = Perinci::To::POD->new(
         name=>$package, meta=>$meta, child_metas=>$cmetas);
     $doc->delete_doc_section('summary'); # already handled by other plugins
