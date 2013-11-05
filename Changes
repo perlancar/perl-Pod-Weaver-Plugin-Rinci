@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.14    2013-11-05 (SHARYANTO)
+
+        [BUG FIXES]
+
+        - Didn't use original metadata's args_as & result_naked property values.
+
+
 0.13    2013-11-02 (SHARYANTO)
 
         - Adjust to Perinci::To::POD 0.36 (no longer uses Riap protocol).
