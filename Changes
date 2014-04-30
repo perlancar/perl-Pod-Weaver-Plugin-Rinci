@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.15    2014-04-30 (SHARYANTO)
+
+        - Adjust to Perinci::Access::Perl 0.66 (use normalize_metadata option
+          instead of orig_meta result metadata).
+
+
 0.14    2013-11-05 (SHARYANTO)
 
         [BUG FIXES]
