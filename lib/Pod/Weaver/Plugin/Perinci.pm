@@ -1,5 +1,8 @@
 package Pod::Weaver::Plugin::Perinci;
 
+# DATE
+# VERSION
+
 use 5.010001;
 use Moose;
 with 'Pod::Weaver::Role::Section';
@@ -9,8 +12,6 @@ use Perinci::Access::Perl;
 use Perinci::To::POD;
 use Pod::Elemental;
 use Pod::Elemental::Element::Nested;
-
-# VERSION
 
 our $pa = Perinci::Access::Perl->new(
     # we want to document the function's original properties (i.e. result_naked
