@@ -179,6 +179,10 @@ its summary and description.
 Command-line options for the script will be listed here. If script has
 subcommands, the options will be categorized per subcommand.
 
+=item * FILES
+
+Configuration files read by script will be listed here.
+
 =back
 
 
