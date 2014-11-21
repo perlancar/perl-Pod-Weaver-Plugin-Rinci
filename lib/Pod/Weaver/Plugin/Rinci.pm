@@ -7,11 +7,17 @@ use 5.010001;
 use Moose;
 with 'Pod::Weaver::Role::Section';
 
+use Capture::Tiny qw(capture);
+use Data::Dmp qw(dmp);
+use File::Temp qw(tempfile);
 use List::Util qw(first);
+use Markdown::To::POD;
 use Perinci::Access::Perl;
+use Perinci::Sub::To::CLIOptSpec qw(gen_cli_opt_spec_from_meta);
 use Perinci::To::POD;
 use Pod::Elemental;
 use Pod::Elemental::Element::Nested;
+use Scalar::Util qw(blessed);
 
 our $pa = Perinci::Access::Perl->new(
     # we want to document the function's original properties (i.e. result_naked
@@ -92,8 +98,39 @@ sub _process_module {
         }
     }
     if ($found) {
-        $self->log(["added POD sections from Rinci metadata for %s", $filename]);
+        $self->log(["added POD sections from Rinci metadata for module '%s'", $filename]);
     }
+}
+
+sub _fmt_opt {
+    my ($opt, $ospec) = @_;
+
+    my @res;
+
+    my $arg_spec = $ospec->{arg_spec};
+    my $is_bool = $arg_spec->{schema} &&
+        $arg_spec->{schema}[0] eq 'bool';
+    my $show_default = exists($ospec->{default}) &&
+        !$is_bool && !$ospec->{is_base64} &&
+            !$ospec->{is_json} && !$ospec->{is_yaml};
+
+    my $add_sum = '';
+    if ($ospec->{is_base64}) {
+        $add_sum = " (base64-encoded)";
+    } elsif ($ospec->{is_json}) {
+        $add_sum = " (JSON-encoded)";
+    } elsif ($ospec->{is_yaml}) {
+        $add_sum = " (YAML-encoded)";
+    }
+
+    $opt =~ s/(?P<name>--?.+?)(?P<val>=(?P<dest>[\w@-]+)|,|\z)/
+        "B<" . $+{name} . ">" . ($+{dest} ? "=I<".$+{dest}.">" : $+{val})/eg;
+
+    push @res, "=item $opt\n\n";
+    push @res, "$ospec->{summary}$add_sum.\n\n" if $ospec->{summary};
+    push @res, "Default value:\n\n ", dmp($ospec->{default}), "\n\n" if $show_default;
+    push @res, "$ospec->{description}\n\n" if $ospec->{description};
+    join "", @res;
 }
 
 sub _process_script {
@@ -112,11 +149,17 @@ sub _process_script {
     die "Can't find file object for $filename" unless $file;
 
     # check if script really uses Perinci::CmdLine
-    my $ct = $file->content;
-    unless ($ct =~ /\b(?:use|require)\s+
-                    (Perinci::CmdLine(?:::Lite|::Any)?)\b/x) {
-        $self->log_debug(["skipped script %s (doesn't seem to use Perinci::CmdLine)", $filename]);
-        return;
+    {
+        my $ct = $file->content;
+        unless ($ct =~ /\b(?:use|require)\s+
+                        (Perinci::CmdLine(?:::Lite|::Any)?)\b/x) {
+            $self->log_debug(["skipped script %s (doesn't seem to use Perinci::CmdLine)", $filename]);
+            return;
+        }
+        if ($ct =~ /^# NO_PWP_RINCI\s*$/m) {
+            $self->log_debug(["skipped script %s (# NO_PWP_RINCI)", $filename]);
+            return;
+        }
     }
 
     require UUID::Random;
@@ -133,10 +176,276 @@ sub _process_script {
         push @cmd, $tempname;
     }
     push @cmd, "--version";
+    my ($stdout, $stderr, $exit) = Capture::Tiny::capture(
+        sub { system @cmd },
+    );
+    my $cli;
+    if ($stdout =~ /^# BEGIN DUMPOBJ $tag\s+(.*)^# END DUMPOBJ $tag/ms) {
+        $cli = eval $1;
+        if ($@) {
+            die "Script '$filename' detected as using Perinci::CmdLine, ".
+                "but error in eval-ing captured object: $@, ".
+                    "raw captured object: <<<$1>>>";
+        }
+        if (!blessed($cli)) {
+            die "Script '$filename' detected as using Perinci::CmdLine, ".
+                "but didn't get an object?";
+        }
+    } else {
+        die "Script '$filename' detected as using Perinci::CmdLine, ".
+            "but can't capture object";
+    }
+    my $prog = $cli->{program_name};
+    if (!$prog) {
+        $prog = $filename;
+        $prog =~ s!.+/!!;
+    }
 
-    say "D:", join(" ",@cmd);
-    $self->log_debug(["running script with %s (doesn't seem to use Perinci::CmdLine)", $filename]);
-    system @cmd;
+    # XXX handle dynamically generated module (if there is such thing in the
+    # future)
+    local @INC = ("lib", @INC);
+
+    # generate clioptspec(for all subcommands; if there is no subcommand then it
+    # is stored in key '')
+    my %metas;
+    my %cliospecs; # key = subcommand name
+    if ($cli->{subcommands}) {
+        if (ref($cli->{subcommands}) eq 'CODE') {
+            die "Script '$filename': sorry, coderef 'subcommands' not ".
+                "supported";
+        }
+        for my $sc_name (keys %{ $cli->{subcommands} }) {
+            my $sc_spec = $cli->{subcommands}{$sc_name};
+            my $url = $sc_spec->{url};
+            my $res = $pa->request(meta => $url);
+            die "Can't meta $url (subcommand $sc_name): $res->[0] - $res->[1]"
+                unless $res->[0] == 200;
+            my $meta = $res->[2];
+            $metas{$sc_name} = $meta;
+            $res = gen_cli_opt_spec_from_meta(
+                meta => $meta,
+                meta_is_normalized => 0, # because riap client is specifically set not to normalize
+                common_opts => $cli->{common_opts},
+                per_arg_json => $cli->{per_arg_json},
+                per_arg_yaml => $cli->{per_arg_yaml},
+            );
+            die "Can't gen_cli_opt_spec_from_meta (subcommand $sc_name): $res->[0] - $res->[1]"
+                unless $res->[0] == 200;
+            $cliospecs{$sc_name} = $res->[2];
+        }
+    } else {
+        my $url = $cli->{url};
+        my $res = $pa->request(meta => $url);
+        die "Can't meta $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
+        my $meta = $res->[2];
+        $metas{''} = $meta;
+        $res = gen_cli_opt_spec_from_meta(
+            meta => $meta,
+            meta_is_normalized => 0, # because riap client is specifically set not to normalize
+            common_opts => $cli->{common_opts},
+            per_arg_json => $cli->{per_arg_json},
+            per_arg_yaml => $cli->{per_arg_yaml},
+        );
+        die "Can't gen_cli_opt_spec_from_meta: $res->[0] - $res->[1]"
+            unless $res->[0] == 200;
+        $cliospecs{''} = $res->[2];
+    }
+
+    my $modified;
+
+    # insert SYNOPSIS section
+    {
+        my $sect = first {
+            $_->can('command') && $_->command eq 'head1' &&
+                uc($_->{content}) eq uc('SYNOPSIS') }
+            @{ $document->children }, @{ $input->{pod_document}->children };
+        last if $sect;
+        my @content;
+        if ($cli->{subcommands}) {
+            for my $sc_name (sort keys %cliospecs) {
+                my $usage = $cliospecs{$sc_name}->{usage_line};
+                $usage =~ s/\[\[prog\]\]/$prog $sc_name/;
+                push @content, " % $usage\n";
+            }
+            push @content, "\n";
+        } else {
+            my $usage = $cliospecs{''}->{usage_line};
+            $usage =~ s/\[\[prog\]\]/$prog/;
+            push @content, " % $usage\n\n";
+        }
+
+        my $elem = Pod::Elemental::Element::Nested->new({
+            command  => 'head1',
+            content  => 'SYNOPSIS',
+            children => Pod::Elemental->read_string(join '',@content)->children,
+        });
+        push @{ $document->children }, $elem;
+        $modified++;
+    }
+
+    # insert DESCRIPTION section
+    {
+        last if $cli->{subcommands};
+        my $sect = first {
+            $_->can('command') && $_->command eq 'head1' &&
+                uc($_->{content}) eq uc('DESCRIPTION') }
+            @{ $document->children }, @{ $input->{pod_document}->children };
+        last if $sect;
+        last unless $metas{''}{description};
+
+        my @content;
+        push @content,
+            Markdown::To::POD::markdown_to_pod($metas{''}{description});
+        push @content, "\n\n";
+
+        my $elem = Pod::Elemental::Element::Nested->new({
+            command  => 'head1',
+            content  => 'DESCRIPTION',
+            children => Pod::Elemental->read_string(join '',@content)->children,
+        });
+        push @{ $document->children }, $elem;
+        $modified++;
+    }
+
+    # insert SUBCOMMANDS section
+    {
+        last unless $cli->{subcommands};
+        my $sect = first {
+            $_->can('command') && $_->command eq 'head1' &&
+                uc($_->{content}) eq uc('SUBCOMMANDS') }
+            @{ $document->children }, @{ $input->{pod_document}->children };
+        last if $sect;
+
+        my @content;
+        for my $sc_name (sort keys %cliospecs) {
+            my $sc_spec = $cli->{subcommands}{$sc_name};
+            my $meta = $metas{$sc_name};
+            push @content, "=head2 B<$sc_name>\n\n";
+            push @content, "$meta->{summary}.\n\n" if $meta->{summary};
+            if ($meta->{description}) {
+                push @content,
+                    Markdown::To::POD::markdown_to_pod($meta->{description});
+                push @content, "\n\n";
+            }
+        }
+
+        my $elem = Pod::Elemental::Element::Nested->new({
+            command  => 'head1',
+            content  => 'SUBCOMMANDS',
+            children => Pod::Elemental->read_string(join '',@content)->children,
+        });
+        push @{ $document->children }, $elem;
+        $modified++;
+    }
+
+    # insert OPTIONS section
+    {
+        my $sect = first {
+            $_->can('command') && $_->command eq 'head1' &&
+                uc($_->{content}) eq uc('OPTIONS') }
+            @{ $document->children }, @{ $input->{pod_document}->children };
+        last if $sect;
+
+        my @content;
+        push @content, "C<*> marks required options.\n\n";
+
+        if ($cli->{subcommands}) {
+            # currently categorize by subcommand instead of category
+
+            my @sc_names = sort keys %cliospecs;
+
+            # first display common options
+            {
+                my $opts = $cliospecs{ $sc_names[0] }{opts};
+                my @opts = sort {
+                    (my $a_without_dash = $a) =~ s/^-+//;
+                    (my $b_without_dash = $b) =~ s/^-+//;
+                    lc($a) cmp lc($b);
+                } grep {!defined($opts->{$_}{arg})} keys %$opts;
+                push @content, "=head2 Common options\n\n";
+                push @content, "=over\n\n";
+                for (@opts) {
+                    push @content, _fmt_opt($_, $opts->{$_});
+                }
+                push @content, "=back\n\n";
+            }
+
+            # display each subcommand's options (without the common options)
+            for my $sc_name (@sc_names) {
+                my $opts = $cliospecs{$sc_name}{opts};
+                my @opts = sort {
+                    (my $a_without_dash = $a) =~ s/^-+//;
+                    (my $b_without_dash = $b) =~ s/^-+//;
+                    lc($a) cmp lc($b);
+                } grep {defined($opts->{$_}{arg})} keys %$opts;
+                push @content, "=head2 Options for subcommand $sc_name\n\n";
+                push @content, "=over\n\n";
+                for (@opts) {
+                    push @content, _fmt_opt($_, $opts->{$_});
+                }
+                push @content, "=back\n\n";
+            }
+        } else {
+            my $opts = $cliospecs{''}{opts};
+            # find all the categories
+            my %cats; # val=[options...]
+            for (keys %$opts) {
+                push @{ $cats{$opts->{$_}{category}} }, $_;
+            }
+            for my $cat (sort keys %cats) {
+                push @content, "=head2 $cat\n\n"
+                    unless keys(%cats) == 1;
+
+                my @opts = sort {
+                    (my $a_without_dash = $a) =~ s/^-+//;
+                    (my $b_without_dash = $b) =~ s/^-+//;
+                    lc($a) cmp lc($b);
+                } @{ $cats{$cat} };
+                push @content, "=over\n\n";
+                for (@opts) {
+                    push @content, _fmt_opt($_, $opts->{$_});
+                }
+                push @content, "=back\n\n";
+            }
+        }
+
+        my $elem = Pod::Elemental::Element::Nested->new({
+            command  => 'head1',
+            content  => 'OPTIONS',
+            children => Pod::Elemental->read_string(join '',@content)->children,
+        });
+        push @{ $document->children }, $elem;
+        $modified++;
+    }
+
+    # insert FILES section
+    {
+        my $sect = first {
+            $_->can('command') && $_->command eq 'head1' &&
+                uc($_->{content}) eq uc('FILES') }
+            @{ $document->children }, @{ $input->{pod_document}->children };
+        last if $sect;
+        last unless $cli->{read_config} // 1;
+
+        my @content;
+        my $confname = $cli->{config_filename} // "$prog.conf";
+        my $confdirs = $cli->{config_dirs} // ["/etc", "~"];
+        for (@$confdirs) {
+            push @content, "B<$_/$confname>\n\n";
+        }
+
+        my $elem = Pod::Elemental::Element::Nested->new({
+            command  => 'head1',
+            content  => 'FILES',
+            children => Pod::Elemental->read_string(join '',@content)->children,
+        });
+        push @{ $document->children }, $elem;
+        $modified++;
+    }
+
+    if ($modified) {
+        $self->log(["added POD sections from Rinci metadata for script '%s'", $filename]);
+    }
 }
 
 sub weave_section {
@@ -149,7 +458,7 @@ sub weave_section {
         eval { $re = qr/$re/ };
         $@ and die "Invalid regex in exclude_files: $re";
         if ($filename =~ $re) {
-            $self->log_debug(["skipped file %s (matched exclude_files)", $filename]);
+            $self->log_debug(["skipped file '%s' (matched exclude_files)", $filename]);
             return;
         }
     }
@@ -192,6 +501,8 @@ In your C<weaver.ini>:
 This plugin inserts stuffs to POD documentation based on information found on
 Rinci metadata.
 
+=head2 For modules
+
 For modules, the following are inserted:
 
 =over
@@ -212,24 +523,35 @@ corresponding function.
 
 To get Rinci metadata from a module, L<Perinci::Access::Perl> is used.
 
-For scripts using L<Perinci::CmdLine>, the following are inserted:
+=head2 For Perinci::CmdLine-based CLI script
+
+For scripts using L<Perinci::CmdLine> (or its variant ::Any and ::Lite), the
+following are inserted:
 
 =over
 
+=item * SYNOPSIS
+
+If the script's POD does not yet have this section, this section will be added
+containing the usage line of the script.
+
 =item * DESCRIPTION
 
-If the script does not have subcommands, description from function metadata will
-be inserted here, if any.
+If the script's POD does not already have this section, and if the script does
+not have subcommands, description from function metadata will be inserted here,
+if any.
 
 =item * SUBCOMMANDS
 
-If the script has subcommands, each subcommand will be listed here, along with
-its summary and description.
+If the script's POD does not already have his section, and if the script has
+subcommands, then each subcommand will be listed here along with its summary and
+description.
 
 =item * OPTIONS
 
-Command-line options for the script will be listed here. If script has
-subcommands, the options will be categorized per subcommand.
+If the script's POD does not already have his section, command-line options for
+the script will be listed here. If script has subcommands, the options will be
+categorized per subcommand.
 
 =item * FILES
 
@@ -237,9 +559,17 @@ Configuration files read by script will be listed here.
 
 =back
 
-To get Perinci::CmdLine information, the script is run with a patched C<run()>
-that will dump the content of the object and exit immediately, so the plugin can
-inspect it.
+To get Perinci::CmdLine object information (which contains the URL of the Rinci
+function, or the list of subcommands, among others), the script is run with a
+patched C<run()> that will dump the content of the object and exit immediately,
+so the plugin can inspect it.
+
+Caveats: 1) Function used by the script must reside in the module, not embedded
+inside the script itself, otherwise it will not be readable by the plugin. 2)
+Coderef C<subcommands> is not supported.
+
+To exclude a script from being processed, you can also put C<# NO_PWP_RINCI> in
+the script.
 
 
 =head1 SEE ALSO
