@@ -111,8 +111,7 @@ sub _fmt_opt {
     my $is_bool = $arg_spec->{schema} &&
         $arg_spec->{schema}[0] eq 'bool';
     my $show_default = exists($ospec->{default}) &&
-        !$is_bool && !$ospec->{is_base64} &&
-            !$ospec->{is_json} && !$ospec->{is_yaml};
+        !$is_bool && !$ospec->{main_opt};
 
     my $add_sum = '';
     if ($ospec->{is_base64}) {
@@ -129,7 +128,13 @@ sub _fmt_opt {
     push @res, "=item $opt\n\n";
     push @res, "$ospec->{summary}$add_sum.\n\n" if $ospec->{summary};
     push @res, "Default value:\n\n ", dmp($ospec->{default}), "\n\n" if $show_default;
-    push @res, "$ospec->{description}\n\n" if $ospec->{description};
+    if ($ospec->{main_opt}) {
+        my $main_opt = $ospec->{main_opt};
+        $main_opt =~ s/\s*,.+//;
+        push @res, "See C<$main_opt>.\n\n";
+    } else {
+        push @res, "$ospec->{description}\n\n" if $ospec->{description};
+    }
     join "", @res;
 }
 
