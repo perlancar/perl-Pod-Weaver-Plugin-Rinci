@@ -138,6 +138,7 @@ sub _fmt_opt {
     if ($ospec->{main_opt}) {
         my $main_opt = $ospec->{main_opt};
         $main_opt =~ s/\s*,.+//;
+        $main_opt =~ s/=.+//;
         push @res, "See C<$main_opt>.\n\n";
     } else {
         push @res, "$ospec->{description}\n\n" if $ospec->{description};
