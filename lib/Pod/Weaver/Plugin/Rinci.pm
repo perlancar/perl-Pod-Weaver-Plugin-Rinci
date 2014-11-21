@@ -126,8 +126,11 @@ sub _fmt_opt {
         "B<" . $+{name} . ">" . ($+{dest} ? "=I<".$+{dest}.">" : $+{val})/eg;
 
     push @res, "=item $opt\n\n";
+
     push @res, "$ospec->{summary}$add_sum.\n\n" if $ospec->{summary};
+
     push @res, "Default value:\n\n ", dmp($ospec->{default}), "\n\n" if $show_default;
+
     if ($ospec->{main_opt}) {
         my $main_opt = $ospec->{main_opt};
         $main_opt =~ s/\s*,.+//;
@@ -135,6 +138,11 @@ sub _fmt_opt {
     } else {
         push @res, "$ospec->{description}\n\n" if $ospec->{description};
     }
+
+    if ($opt =~ /\@/) {
+        push @res, "Can be specified multiple times.\n\n";
+    }
+
     join "", @res;
 }
 
