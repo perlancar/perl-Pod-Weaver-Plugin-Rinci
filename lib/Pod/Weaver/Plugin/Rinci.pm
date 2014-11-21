@@ -29,49 +29,22 @@ has exclude_files => (
     isa => 'Str',
 );
 
-sub weave_section {
+sub _process_module {
     my ($self, $document, $input) = @_;
 
-    my $filename = $input->{filename} || 'file';
+    my $filename = $input->{filename};
 
-    # guess package name from filename
-    my $package;
-    if ($filename =~ m!^lib/(.+)\.pm$!) {
-        $package = $1;
-        $package =~ s!/!::!g;
-    } else {
-        $self->log_debug(["skipped file %s (not a Perl module)", $filename]);
-        return;
-    }
+    # guess package from filename
+    $filename =~ m!^lib/(.+)\.pm$!;
+    my $package = $1;
+    $package =~ s!/!::!g;
 
-    if (defined $self->exclude_files) {
-        my $re = $self->exclude_files;
-        eval { $re = qr/$re/ };
-        $@ and die "Invalid regex in exclude_files: $re";
-        if ($filename =~ $re) {
-            $self->log_debug(["skipped file %s (matched exclude_files)", $filename]);
-            return;
-        }
-    }
-    if (defined $self->exclude_modules) {
-        my $re = $self->exclude_modules;
-        eval { $re = qr/$re/ };
-        $@ and die "Invalid regex in exclude_modules: $re";
-        if ($package =~ $re) {
-            $self->log (["skipped package %s (matched exclude_modules)", $package]);
-            return;
-        }
-    }
-
+    # XXX handle dynamically generated module (if there is such thing in the
+    # future)
     local @INC = ("lib", @INC);
 
-    $self->log(["generating POD for %s ...", $filename]);
-
-    # generate the POD and insert it to FUNCTIONS section
     my $url = $package; $url =~ s!::!/!g; $url = "pl:/$url/";
-    my $res;
-
-    $res = $pa->request(meta => $url);
+    my $res = $pa->request(meta => $url);
     die "Can't meta $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
     my $meta = $res->[2];
     $res = $pa->request(child_metas => $url);
@@ -123,6 +96,83 @@ sub weave_section {
     }
 }
 
+sub _process_script {
+    my ($self, $document, $input) = @_;
+
+    my $filename = $input->{filename};
+
+    # find file object
+    my $file;
+    for (@{ $input->{zilla}->files }) {
+        if ($_->name eq $filename) {
+            $file = $_;
+            last;
+        }
+    }
+    die "Can't find file object for $filename" unless $file;
+
+    # check if script really uses Perinci::CmdLine
+    my $ct = $file->content;
+    unless ($ct =~ /\b(?:use|require)\s+
+                    (Perinci::CmdLine(?:::Lite|::Any)?)\b/x) {
+        $self->log_debug(["skipped script %s (doesn't seem to use Perinci::CmdLine)", $filename]);
+        return;
+    }
+
+    require UUID::Random;
+    my $tag=UUID::Random::generate();
+
+    my @cmd = ($^X, "-MPerinci::CmdLine::Base::Patch::DumpOnRun=-tag,$tag");
+    if ($file->isa("Dist::Zilla::File::OnDisk")) {
+        push @cmd, $filename;
+    } else {
+        # write content to filesystem to temp file first
+        my ($fh, $tempname) = tempfile();
+        print $fh $file->content;
+        close $fh;
+        push @cmd, $tempname;
+    }
+    push @cmd, "--version";
+
+    say "D:", join(" ",@cmd);
+    $self->log_debug(["running script with %s (doesn't seem to use Perinci::CmdLine)", $filename]);
+    system @cmd;
+}
+
+sub weave_section {
+    my ($self, $document, $input) = @_;
+
+    my $filename = $input->{filename};
+
+    if (defined $self->exclude_files) {
+        my $re = $self->exclude_files;
+        eval { $re = qr/$re/ };
+        $@ and die "Invalid regex in exclude_files: $re";
+        if ($filename =~ $re) {
+            $self->log_debug(["skipped file %s (matched exclude_files)", $filename]);
+            return;
+        }
+    }
+
+    my $package;
+    if ($filename =~ m!^lib/(.+)\.pm$!) {
+        $package = $1;
+        $package =~ s!/!::!g;
+        if (defined $self->exclude_modules) {
+            my $re = $self->exclude_modules;
+            eval { $re = qr/$re/ };
+            $@ and die "Invalid regex in exclude_modules: $re";
+            if ($package =~ $re) {
+                $self->log (["skipped package %s (matched exclude_modules)", $package]);
+                return;
+            }
+        }
+        $self->_process_module($document, $input);
+    } elsif ($filename =~ m!^(?:bin|scripts?)/!) {
+        $self->_process_script($document, $input);
+    }
+}
+
 1;
 # ABSTRACT: Insert stuffs to POD from Rinci metadata
 
@@ -160,6 +210,8 @@ corresponding function.
 
 =back
 
+To get Rinci metadata from a module, L<Perinci::Access::Perl> is used.
+
 For scripts using L<Perinci::CmdLine>, the following are inserted:
 
 =over
@@ -184,6 +236,10 @@ subcommands, the options will be categorized per subcommand.
 Configuration files read by script will be listed here.
 
 =back
+
+To get Perinci::CmdLine information, the script is run with a patched C<run()>
+that will dump the content of the object and exit immediately, so the plugin can
+inspect it.
 
 
 =head1 SEE ALSO
