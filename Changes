@@ -1,5 +1,15 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.16    2014-11-21 (PERLANCAR)
+
+        - Rename distribution from Pod-Weaver-Plugin-Perinci to
+          Pod-Weaver-Plugin-Rinci to be consistent with the dzil plugins
+          (Dist-Zilla-Plugin-Rinci-*).
+
+        - Support inserting POD stuffs to Perinci::CmdLine-based scripts:
+          SYNOPSIS, DESCRIPTION, SUBCOMMANDS, OPTIONS, FILES sections.
+
+
 0.15    2014-04-30 (SHARYANTO)
 
         - Adjust to Perinci::Access::Perl 0.66 (use normalize_metadata option
