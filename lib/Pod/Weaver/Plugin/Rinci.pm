@@ -201,6 +201,11 @@ sub _process_script {
         $prog =~ s!.+/!!;
     }
 
+    if ($cli->{url} =~ m!^(pl:)?/main/!) {
+        $self->log(["skipped script '%s': function seems embedded in script ($cli->{url}, not supported", $filename]);
+        return;
+    }
+
     # XXX handle dynamically generated module (if there is such thing in the
     # future)
     local @INC = ("lib", @INC);
