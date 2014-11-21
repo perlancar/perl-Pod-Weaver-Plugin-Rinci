@@ -131,6 +131,10 @@ sub _fmt_opt {
 
     push @res, "Default value:\n\n ", dmp($ospec->{default}), "\n\n" if $show_default;
 
+    if ($arg_spec->{schema} && $arg_spec->{schema}[1]{in}) {
+        push @res, "Valid values:\n\n ", dmp($arg_spec->{schema}[1]{in}), "\n\n";
+    }
+
     if ($ospec->{main_opt}) {
         my $main_opt = $ospec->{main_opt};
         $main_opt =~ s/\s*,.+//;
