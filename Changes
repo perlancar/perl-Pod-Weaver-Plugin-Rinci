@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.18    2014-11-21 (PERLANCAR)
+
+	- Tweaks for script: Add note about options that can be specified
+          multiple times. Don't repeat description for non-main option, instead
+          refer to it.
+
+
 0.17    2014-11-21 (PERLANCAR)
 
 	- Script if function URL qr#^/main/# (embedded).
