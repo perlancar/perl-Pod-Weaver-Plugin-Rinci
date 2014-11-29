@@ -1,5 +1,15 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.19    2014-11-30 (PERLANCAR)
+
+        - Use Perinci::Sub::To::CLIOptSpec 0.08 to be able to get '@' even
+          though x.schema.entity has been set.
+
+        - Tweak output: See --foo=s -> See --foo.
+
+        - Show option's valid values from schema's 'in' clause, if any.
+
+
 0.18    2014-11-21 (PERLANCAR)
 
 	- Tweaks for script: Add note about options that can be specified
