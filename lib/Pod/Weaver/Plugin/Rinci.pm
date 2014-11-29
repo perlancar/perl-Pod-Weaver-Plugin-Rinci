@@ -144,7 +144,7 @@ sub _fmt_opt {
         push @res, "$ospec->{description}\n\n" if $ospec->{description};
     }
 
-    if ($opt =~ /\@/) {
+    if (($ospec->{orig_opt} // '') =~ /\@/) {
         push @res, "Can be specified multiple times.\n\n";
     }
 
