@@ -13,7 +13,7 @@ use File::Temp qw(tempfile);
 use List::Util qw(first);
 use Markdown::To::POD;
 use Perinci::Access::Perl;
-use Perinci::Sub::To::CLIOptSpec qw(gen_cli_opt_spec_from_meta);
+use Perinci::Sub::To::CLIDocData qw(gen_cli_doc_data_from_meta);
 use Perinci::To::POD;
 use Pod::Elemental;
 use Pod::Elemental::Element::Nested;
@@ -228,10 +228,10 @@ sub _process_script {
     # future)
     local @INC = ("lib", @INC);
 
-    # generate clioptspec(for all subcommands; if there is no subcommand then it
+    # generate clidocdata(for all subcommands; if there is no subcommand then it
     # is stored in key '')
     my %metas;
-    my %cliospecs; # key = subcommand name
+    my %clidocdata; # key = subcommand name
     if ($cli->{subcommands}) {
         if (ref($cli->{subcommands}) eq 'CODE') {
             die "Script '$filename': sorry, coderef 'subcommands' not ".
@@ -245,16 +245,16 @@ sub _process_script {
                 unless $res->[0] == 200;
             my $meta = $res->[2];
             $metas{$sc_name} = $meta;
-            $res = gen_cli_opt_spec_from_meta(
+            $res = gen_cli_doc_data_from_meta(
                 meta => $meta,
                 meta_is_normalized => 0, # because riap client is specifically set not to normalize
                 common_opts => $cli->{common_opts},
                 per_arg_json => $cli->{per_arg_json},
                 per_arg_yaml => $cli->{per_arg_yaml},
             );
-            die "Can't gen_cli_opt_spec_from_meta (subcommand $sc_name): $res->[0] - $res->[1]"
+            die "Can't gen_cli_doc_data_from_meta (subcommand $sc_name): $res->[0] - $res->[1]"
                 unless $res->[0] == 200;
-            $cliospecs{$sc_name} = $res->[2];
+            $clidocdata{$sc_name} = $res->[2];
         }
     } else {
         my $url = $cli->{url};
@@ -262,16 +262,16 @@ sub _process_script {
         die "Can't meta $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
         my $meta = $res->[2];
         $metas{''} = $meta;
-        $res = gen_cli_opt_spec_from_meta(
+        $res = gen_cli_doc_data_from_meta(
             meta => $meta,
             meta_is_normalized => 0, # because riap client is specifically set not to normalize
             common_opts => $cli->{common_opts},
             per_arg_json => $cli->{per_arg_json},
             per_arg_yaml => $cli->{per_arg_yaml},
         );
-        die "Can't gen_cli_opt_spec_from_meta: $res->[0] - $res->[1]"
+        die "Can't gen_cli_doc_data_from_meta: $res->[0] - $res->[1]"
             unless $res->[0] == 200;
-        $cliospecs{''} = $res->[2];
+        $clidocdata{''} = $res->[2];
     }
 
     my $modified;
@@ -284,17 +284,32 @@ sub _process_script {
             @{ $document->children }, @{ $input->{pod_document}->children };
         last if $sect;
         my @content;
+        push @content, "Usage:\n\n";
         if ($cli->{subcommands}) {
-            for my $sc_name (sort keys %cliospecs) {
-                my $usage = $cliospecs{$sc_name}->{usage_line};
+            for my $sc_name (sort keys %clidocdata) {
+                my $usage = $clidocdata{$sc_name}->{usage_line};
                 $usage =~ s/\[\[prog\]\]/$prog $sc_name/;
                 push @content, " % $usage\n";
             }
             push @content, "\n";
         } else {
-            my $usage = $cliospecs{''}->{usage_line};
+            my $usage = $clidocdata{''}->{usage_line};
             $usage =~ s/\[\[prog\]\]/$prog/;
             push @content, " % $usage\n\n";
+        }
+
+        my @examples;
+        for my $sc_name (sort keys %clidocdata) {
+            push @examples, @{ $clidocdata{$sc_name}{examples} };
+        }
+        if (@examples) {
+            push @content, "Examples:\n\n";
+            for my $eg (@examples) {
+                push @content, "$eg->{summary}:\n\n" if $eg->{summary};
+                my $cmdline = $eg->{cmdline};
+                $cmdline =~ s/\[\[prog\]\]/$prog/;
+                push @content, " % $cmdline\n\n";
+            }
         }
 
         my $elem = Pod::Elemental::Element::Nested->new({
@@ -340,7 +355,7 @@ sub _process_script {
         last if $sect;
 
         my @content;
-        for my $sc_name (sort keys %cliospecs) {
+        for my $sc_name (sort keys %clidocdata) {
             my $sc_spec = $cli->{subcommands}{$sc_name};
             my $meta = $metas{$sc_name};
             push @content, "=head2 B<$sc_name>\n\n";
@@ -375,11 +390,11 @@ sub _process_script {
         if ($cli->{subcommands}) {
             # currently categorize by subcommand instead of category
 
-            my @sc_names = sort keys %cliospecs;
+            my @sc_names = sort keys %clidocdata;
 
             # first display common options
             {
-                my $opts = $cliospecs{ $sc_names[0] }{opts};
+                my $opts = $clidocdata{ $sc_names[0] }{opts};
                 my @opts = sort {
                     (my $a_without_dash = $a) =~ s/^-+//;
                     (my $b_without_dash = $b) =~ s/^-+//;
@@ -395,7 +410,7 @@ sub _process_script {
 
             # display each subcommand's options (without the common options)
             for my $sc_name (@sc_names) {
-                my $opts = $cliospecs{$sc_name}{opts};
+                my $opts = $clidocdata{$sc_name}{opts};
                 my @opts = sort {
                     (my $a_without_dash = $a) =~ s/^-+//;
                     (my $b_without_dash = $b) =~ s/^-+//;
@@ -409,7 +424,7 @@ sub _process_script {
                 push @content, "=back\n\n";
             }
         } else {
-            my $opts = $cliospecs{''}{opts};
+            my $opts = $clidocdata{''}{opts};
             # find all the categories
             my %cats; # val=[options...]
             for (keys %$opts) {
