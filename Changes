@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.20    2014-12-02 (PERLANCAR)
+
+	- Switch Perinci::Sub::To::{CLIOptSpec,CLIDocData}, show examples
+	  in Synopsis.
+
+
 0.19    2014-11-30 (PERLANCAR)
 
         - Use Perinci::Sub::To::CLIOptSpec 0.08 to be able to get '@' even
