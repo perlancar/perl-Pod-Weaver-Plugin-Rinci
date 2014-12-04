@@ -111,7 +111,7 @@ sub _fmt_opt {
     my $is_bool = $arg_spec->{schema} &&
         $arg_spec->{schema}[0] eq 'bool';
     my $show_default = exists($ospec->{default}) &&
-        !$is_bool && !$ospec->{main_opt};
+        !$is_bool && !$ospec->{main_opt} && !$ospec->{is_alias};
 
     my $add_sum = '';
     if ($ospec->{is_base64}) {
