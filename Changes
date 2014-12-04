@@ -1,5 +1,10 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.21    2014-12-04 (PERLANCAR)
+
+        - Tweak: don't show valid values or default values for alias options.
+
+
 0.20    2014-12-02 (PERLANCAR)
 
 	- Switch Perinci::Sub::To::{CLIOptSpec,CLIDocData}, show examples
