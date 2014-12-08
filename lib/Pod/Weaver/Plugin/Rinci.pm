@@ -207,11 +207,11 @@ sub _process_script {
         }
         if (!blessed($cli)) {
             die "Script '$filename' detected as using Perinci::CmdLine, ".
-                "but didn't get an object?";
+                "but didn't get an object?, raw captured output=<<$stdout>>";
         }
     } else {
         die "Script '$filename' detected as using Perinci::CmdLine, ".
-            "but can't capture object";
+            "but can't capture object, raw captured output: stdout=<<$stdout>>, stderr=<<$stderr>>";
     }
     my $prog = $cli->{program_name};
     if (!$prog) {
