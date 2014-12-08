@@ -183,7 +183,7 @@ sub _process_script {
     require UUID::Random;
     my $tag=UUID::Random::generate();
 
-    my @cmd = ($^X, "-MPerinci::CmdLine::Base::Patch::DumpOnRun=-tag,$tag");
+    my @cmd = ($^X, "-Ilib", "-MPerinci::CmdLine::Base::Patch::DumpOnRun=-tag,$tag");
     if ($file->isa("Dist::Zilla::File::OnDisk")) {
         push @cmd, $filename;
     } else {
