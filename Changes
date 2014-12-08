@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.22    2014-12-08 (PERLANCAR)
+
+	- [Bugfix] Forgot to add 'lib' to @INC when executing script.
+
+	- Show raw stdout/stderr when failing to capture, for debugging.
+
+
 0.21    2014-12-04 (PERLANCAR)
 
         - Tweak: don't show valid values or default values for alias options.
