@@ -1,6 +1,6 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
-0.23    2014-12-08 (PERLANCAR)
+0.23    2014-12-09 (PERLANCAR)
 
 	- [Bugfix] Forgot to add 'lib' to @INC when executing script.
 
