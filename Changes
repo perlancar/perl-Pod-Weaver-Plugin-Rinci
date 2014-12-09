@@ -1,10 +1,18 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
-0.22    2014-12-08 (PERLANCAR)
+0.23    2014-12-08 (PERLANCAR)
 
 	- [Bugfix] Forgot to add 'lib' to @INC when executing script.
 
 	- Show raw stdout/stderr when failing to capture, for debugging.
+
+
+0.22    2014-12-07 (PERLANCAR)
+
+	- Fix encoding issue by converting characters to bytes as expected
+	  by read_string() (KENTNL++, ref:
+	  https://github.com/rjbs/Dist-Zilla-Plugin-PodWeaver/issues/4#issu
+	  ecomment-65880917).
 
 
 0.21    2014-12-04 (PERLANCAR)

@@ -9,6 +9,7 @@ with 'Pod::Weaver::Role::Section';
 
 use Capture::Tiny qw(capture);
 use Data::Dmp qw(dmp);
+use Encode qw(decode encode);
 use File::Temp qw(tempfile);
 use List::Util qw(first);
 use Markdown::To::POD;
@@ -75,6 +76,10 @@ sub _process_module {
 
         $found++;
         #$self->log(["generated POD section %s", $1]);
+
+        # convert characters to bytes, which is expected by read_string()
+        $sectcontent = encode('UTF-8', $sectcontent, Encode::FB_CROAK);
+
         my $elem = Pod::Elemental::Element::Nested->new({
             command  => 'head1',
             content  => $sectname,
@@ -312,10 +317,13 @@ sub _process_script {
             }
         }
 
+        # convert characters to bytes, which is expected by read_string()
+        my $content = encode('UTF-8', join('',@content), Encode::FB_CROAK);
+
         my $elem = Pod::Elemental::Element::Nested->new({
             command  => 'head1',
             content  => 'SYNOPSIS',
-            children => Pod::Elemental->read_string(join '',@content)->children,
+            children => Pod::Elemental->read_string($content)->children,
         });
         push @{ $document->children }, $elem;
         $modified++;
