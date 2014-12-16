@@ -159,6 +159,10 @@ sub _fmt_opt {
 sub _process_script {
     my ($self, $document, $input) = @_;
 
+    # XXX handle dynamically generated module (if there is such thing in the
+    # future)
+    local @INC = ("lib", @INC);
+
     my $filename = $input->{filename};
 
     # find file object
@@ -203,7 +207,7 @@ sub _process_script {
         sub { system @cmd },
     );
     my $cli;
-    if ($stdout =~ /^# BEGIN DUMPOBJ $tag\s+(.*)^# END DUMPOBJ $tag/ms) {
+    if ($stdout =~ /^# BEGIN DUMP $tag\s+(.*)^# END DUMP $tag/ms) {
         $cli = eval $1;
         if ($@) {
             die "Script '$filename' detected as using Perinci::CmdLine, ".
@@ -224,18 +228,20 @@ sub _process_script {
         $prog =~ s!.+/!!;
     }
 
+    # XXX handle embedded but not in /main
     if ($cli->{url} =~ m!^(pl:)?/main/!) {
-        $self->log(["skipped script '%s': function seems embedded in script ($cli->{url}, not supported", $filename]);
-        return;
+        # function is embedded in script (/main/FOO), we need to load the
+        # metadata in-process
+        no warnings;
+        %main::SPEC = (); # empty first to avoid mixing with other scripts'
+        (undef, undef, undef) = capture {
+            eval q{package main; use Perinci::CmdLine::Base::Patch::DumpAndExit -tag=>'$tag', -exit_method=>'die'; do "$filename"};
+        };
     }
-
-    # XXX handle dynamically generated module (if there is such thing in the
-    # future)
-    local @INC = ("lib", @INC);
 
     # generate clidocdata(for all subcommands; if there is no subcommand then it
     # is stored in key '')
-    my %metas;
+    my %metas; # key = subcommand name
     my %clidocdata; # key = subcommand name
     if ($cli->{subcommands}) {
         if (ref($cli->{subcommands}) eq 'CODE') {
