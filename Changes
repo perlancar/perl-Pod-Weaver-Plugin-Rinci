@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.24    2014-12-16 (PERLANCAR)
+
+	- Support scripts with embedded function under /main.
+
+	- Split Perinci::CmdLine::Base::Patch::DumpAndExit to another dist.
+
+
 0.23    2014-12-09 (PERLANCAR)
 
 	- [Bugfix] Forgot to add 'lib' to @INC when executing script.
