@@ -6,8 +6,8 @@ package Pod::Weaver::Plugin::Rinci;
 use 5.010001;
 use Moose;
 with 'Pod::Weaver::Role::Section';
+with 'Pod::Weaver::Role::DumpPerinciCmdLineScript';
 
-use Capture::Tiny qw(capture);
 use Data::Dmp qw(dmp);
 use Encode qw(decode encode);
 use File::Temp qw(tempfile);
@@ -156,86 +156,21 @@ sub _fmt_opt {
 }
 
 sub _process_script {
-    my ($self, $document, $input) = @_;
+    require Perinci::CmdLine::Dump;
 
-    # XXX handle dynamically generated module (if there is such thing in the
-    # future)
-    local @INC = ("lib", @INC);
+    my ($self, $document, $input) = @_;
 
     my $filename = $input->{filename};
 
-    # find file object
-    my $file;
-    for (@{ $input->{zilla}->files }) {
-        if ($_->name eq $filename) {
-            $file = $_;
-            last;
-        }
-    }
-    die "Can't find file object for $filename" unless $file;
+    my $res = $self->dump_perinci_cmdline_script($input);
+    die "Can't dump script: $res->[0] - $res->[1]" unless $res->[0] == 200;
+    my $cli = $res->[2];
+    local %main::SPEC = %{ $res->[3]{'func.meta'} } if $res->[3]{'func.meta'};
 
-    # check if script really uses Perinci::CmdLine
-    {
-        my $ct = $file->content;
-        unless ($ct =~ /\b(?:use|require)\s+
-                        (Perinci::CmdLine(?:::Lite|::Any)?)\b/x) {
-            $self->log_debug(["skipped script %s (doesn't seem to use Perinci::CmdLine)", $filename]);
-            return;
-        }
-        if ($ct =~ /^# NO_PWP_RINCI\s*$/m) {
-            $self->log_debug(["skipped script %s (# NO_PWP_RINCI)", $filename]);
-            return;
-        }
-    }
-
-    require UUID::Random;
-    my $tag=UUID::Random::generate();
-
-    my @cmd = ($^X, "-Ilib", "-MPerinci::CmdLine::Base::Patch::DumpAndExit=-tag,$tag");
-    if ($file->isa("Dist::Zilla::File::OnDisk")) {
-        push @cmd, $filename;
-    } else {
-        # write content to filesystem to temp file first
-        my ($fh, $tempname) = tempfile();
-        print $fh $file->content;
-        close $fh;
-        push @cmd, $tempname;
-    }
-    push @cmd, "--version";
-    my ($stdout, $stderr, $exit) = Capture::Tiny::capture(
-        sub { system @cmd },
-    );
-    my $cli;
-    if ($stdout =~ /^# BEGIN DUMP $tag\s+(.*)^# END DUMP $tag/ms) {
-        $cli = eval $1;
-        if ($@) {
-            die "Script '$filename' detected as using Perinci::CmdLine, ".
-                "but error in eval-ing captured object: $@, ".
-                    "raw captured object: <<<$1>>>";
-        }
-        if (!blessed($cli)) {
-            die "Script '$filename' detected as using Perinci::CmdLine, ".
-                "but didn't get an object?, raw captured output=<<$stdout>>";
-        }
-    } else {
-        die "Script '$filename' detected as using Perinci::CmdLine, ".
-            "but can't capture object, raw captured output: stdout=<<$stdout>>, stderr=<<$stderr>>";
-    }
     my $prog = $cli->{program_name};
     if (!$prog) {
         $prog = $filename;
         $prog =~ s!.+/!!;
-    }
-
-    # XXX handle embedded but not in /main
-    if ($cli->{url} =~ m!^(pl:)?/main/!) {
-        # function is embedded in script (/main/FOO), we need to load the
-        # metadata in-process
-        no warnings;
-        %main::SPEC = (); # empty first to avoid mixing with other scripts'
-        (undef, undef, undef) = capture {
-            eval q{package main; use Perinci::CmdLine::Base::Patch::DumpAndExit -tag=>'$tag', -exit_method=>'die'; do "$filename"};
-        };
     }
 
     # generate clidocdata(for all subcommands; if there is no subcommand then it
