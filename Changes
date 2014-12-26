@@ -1,5 +1,10 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.26    2014-12-26 (PERLANCAR)
+
+	- Skip processing script if script is not eligible (status 412).
+
+
 0.25    2014-12-21 (PERLANCAR)
 
 	- Refactor: extract role PWR::DumpPerinciCmdLineScript.
