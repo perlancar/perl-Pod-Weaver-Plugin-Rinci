@@ -163,7 +163,13 @@ sub _process_script {
     my $filename = $input->{filename};
 
     my $res = $self->dump_perinci_cmdline_script($input);
-    die "Can't dump script: $res->[0] - $res->[1]" unless $res->[0] == 200;
+    if ($res->[0] == 412) {
+        $self->log_debug(["skipped file '%s' (%s)", $filename, $res->[1]]);
+        return;
+    } elsif ($res->[0] != 200) {
+        die "Can't dump script: $res->[0] - $res->[1]";
+    }
+
     my $cli = $res->[2];
     local %main::SPEC = %{ $res->[3]{'func.meta'} } if $res->[3]{'func.meta'};
 
