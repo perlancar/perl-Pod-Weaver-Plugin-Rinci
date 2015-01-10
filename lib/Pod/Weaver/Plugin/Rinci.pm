@@ -5,6 +5,7 @@ package Pod::Weaver::Plugin::Rinci;
 
 use 5.010001;
 use Moose;
+with 'Pod::Weaver::Role::AddTextToSection';
 with 'Pod::Weaver::Role::Section';
 with 'Pod::Weaver::Role::DumpPerinciCmdLineScript';
 
@@ -77,30 +78,7 @@ sub _process_module {
         $found++;
         #$self->log(["generated POD section %s", $1]);
 
-        # convert characters to bytes, which is expected by read_string()
-        $sectcontent = encode('UTF-8', $sectcontent, Encode::FB_CROAK);
-
-        my $elem = Pod::Elemental::Element::Nested->new({
-            command  => 'head1',
-            content  => $sectname,
-            children => Pod::Elemental->read_string($sectcontent)->children,
-        });
-        my $sect = first {
-            $_->can('command') && $_->command eq 'head1' &&
-                uc($_->{content}) eq uc($sectname) }
-            @{ $document->children }, @{ $input->{pod_document}->children };
-        # if existing section exists, append it
-        #$self->log(["sect=%s", $sect]);
-        if ($sect) {
-            # sometimes we get a Pod::Elemental::Element::Pod5::Command (e.g.
-            # empty "=head1 DESCRIPTION") instead of a
-            # Pod::Elemental::Element::Nested. in that case, just ignore it.
-            if ($sect->can('children')) {
-                push @{ $sect->children }, @{ $elem->children };
-            }
-        } else {
-            push @{ $document->children }, $elem;
-        }
+        $self->add_text_to_section($document, $sectcontent, $sectname);
     }
     if ($found) {
         $self->log(["added POD sections from Rinci metadata for module '%s'", $filename]);
