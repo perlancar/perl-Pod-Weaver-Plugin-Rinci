@@ -388,30 +388,11 @@ sub _process_script {
         $modified++;
     }
 
-    # insert FILES section
-    {
-        my $sect = first {
-            $_->can('command') && $_->command eq 'head1' &&
-                uc($_->{content}) eq uc('FILES') }
-            @{ $document->children }, @{ $input->{pod_document}->children };
-        last if $sect;
-        last unless $cli->{read_config} // 1;
+    # XXX insert FILES section (currently done by PWS::Files::PerinciCmdLine,
+    # should probably be done by us?)
 
-        my @content;
-        my $confname = $cli->{config_filename} // "$prog.conf";
-        my $confdirs = $cli->{config_dirs} // ["/etc", "~"];
-        for (@$confdirs) {
-            push @content, "B<$_/$confname>\n\n";
-        }
-
-        my $elem = Pod::Elemental::Element::Nested->new({
-            command  => 'head1',
-            content  => 'FILES',
-            children => Pod::Elemental->read_string(join '',@content)->children,
-        });
-        push @{ $document->children }, $elem;
-        $modified++;
-    }
+    # XXX insert ENVIRONMENT section (currently done by
+    # PWS::Files::PerinciCmdLine, should probably be done by us?)
 
     if ($modified) {
         $self->log(["added POD sections from Rinci metadata for script '%s'", $filename]);
