@@ -1,5 +1,14 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.28    2015-01-13 (PERLANCAR)
+
+        - Add back the functionalities of adding FILES as well as ENVIRONMENT
+          sections. It's better that the functionalities are added here because
+          we can avoid having to dump/detect script repeatedly.
+
+        - Use Pod::Weaver::Role::AddTextToSection.
+
+
 0.27    2015-01-10 (PERLANCAR)
 
 	- (Temporarily?) skip adding FILES section (done by
