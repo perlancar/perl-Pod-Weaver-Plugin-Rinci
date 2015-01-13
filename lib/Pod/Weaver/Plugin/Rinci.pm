@@ -12,13 +12,10 @@ with 'Pod::Weaver::Role::DumpPerinciCmdLineScript';
 use Data::Dmp qw(dmp);
 use Encode qw(decode encode);
 use File::Temp qw(tempfile);
-use List::Util qw(first);
 use Markdown::To::POD;
 use Perinci::Access::Perl;
 use Perinci::Sub::To::CLIDocData qw(gen_cli_doc_data_from_meta);
 use Perinci::To::POD;
-use Pod::Elemental;
-use Pod::Elemental::Element::Nested;
 use Scalar::Util qw(blessed);
 
 our $pa = Perinci::Access::Perl->new(
@@ -207,11 +204,6 @@ sub _process_script {
 
     # insert SYNOPSIS section
     {
-        my $sect = first {
-            $_->can('command') && $_->command eq 'head1' &&
-                uc($_->{content}) eq uc('SYNOPSIS') }
-            @{ $document->children }, @{ $input->{pod_document}->children };
-        last if $sect;
         my @content;
         push @content, "Usage:\n\n";
         if ($cli->{subcommands}) {
@@ -240,27 +232,16 @@ sub _process_script {
                 push @content, " % $cmdline\n\n";
             }
         }
+        last unless @content;
 
-        # convert characters to bytes, which is expected by read_string()
-        my $content = encode('UTF-8', join('',@content), Encode::FB_CROAK);
-
-        my $elem = Pod::Elemental::Element::Nested->new({
-            command  => 'head1',
-            content  => 'SYNOPSIS',
-            children => Pod::Elemental->read_string($content)->children,
-        });
-        push @{ $document->children }, $elem;
+        $self->add_text_to_section($document, join('', @content), 'SYNOPSIS',
+                                   {ignore=>1});
         $modified++;
     }
 
     # insert DESCRIPTION section
     {
         last if $cli->{subcommands};
-        my $sect = first {
-            $_->can('command') && $_->command eq 'head1' &&
-                uc($_->{content}) eq uc('DESCRIPTION') }
-            @{ $document->children }, @{ $input->{pod_document}->children };
-        last if $sect;
         last unless $metas{''}{description};
 
         my @content;
@@ -268,23 +249,14 @@ sub _process_script {
             Markdown::To::POD::markdown_to_pod($metas{''}{description});
         push @content, "\n\n";
 
-        my $elem = Pod::Elemental::Element::Nested->new({
-            command  => 'head1',
-            content  => 'DESCRIPTION',
-            children => Pod::Elemental->read_string(join '',@content)->children,
-        });
-        push @{ $document->children }, $elem;
+        $self->add_text_to_section($document, join('', @content), 'DESCRIPTION',
+                                   {ignore=>1});
         $modified++;
     }
 
     # insert SUBCOMMANDS section
     {
         last unless $cli->{subcommands};
-        my $sect = first {
-            $_->can('command') && $_->command eq 'head1' &&
-                uc($_->{content}) eq uc('SUBCOMMANDS') }
-            @{ $document->children }, @{ $input->{pod_document}->children };
-        last if $sect;
 
         my @content;
         for my $sc_name (sort keys %clidocdata) {
@@ -299,23 +271,13 @@ sub _process_script {
             }
         }
 
-        my $elem = Pod::Elemental::Element::Nested->new({
-            command  => 'head1',
-            content  => 'SUBCOMMANDS',
-            children => Pod::Elemental->read_string(join '',@content)->children,
-        });
-        push @{ $document->children }, $elem;
+        $self->add_text_to_section($document, join('', @content), 'SUBCOMMANDS',
+                                   {ignore=>1});
         $modified++;
     }
 
     # insert OPTIONS section
     {
-        my $sect = first {
-            $_->can('command') && $_->command eq 'head1' &&
-                uc($_->{content}) eq uc('OPTIONS') }
-            @{ $document->children }, @{ $input->{pod_document}->children };
-        last if $sect;
-
         my @content;
         push @content, "C<*> marks required options.\n\n";
 
@@ -379,20 +341,55 @@ sub _process_script {
             }
         }
 
-        my $elem = Pod::Elemental::Element::Nested->new({
-            command  => 'head1',
-            content  => 'OPTIONS',
-            children => Pod::Elemental->read_string(join '',@content)->children,
-        });
-        push @{ $document->children }, $elem;
+        $self->add_text_to_section($document, join('', @content), 'OPTIONS',
+                                   {ignore=>1});
         $modified++;
     }
 
-    # XXX insert FILES section (currently done by PWS::Files::PerinciCmdLine,
-    # should probably be done by us?)
+    # insert ENVIRONMENT section
+    {
+        # workaround because currently the dumped object does not contain all
+        # attributes in the hash (Moo/Mo issue?), we need to access the
+        # attribute accessor method first to get them recorded in the hash. this
+        # will be fixed in the dump module in the future.
+        local $0 = $filename;
+        local @INC = ("lib", @INC);
+        eval "use " . ref($cli) . "()";
+        die if $@;
 
-    # XXX insert ENVIRONMENT section (currently done by
-    # PWS::Files::PerinciCmdLine, should probably be done by us?)
+        last unless $cli->read_env;
+        #$self->log_debug(["skipped file %s (script does not read env)", $filename]);
+        my @content;
+        push @content, $cli->env_name . "\n\n";
+
+        $self->add_text_to_section($document, join('', @content), 'ENVIRONMENT');
+        $modified++;
+    }
+
+    # insert FILES section
+    {
+        # workaround because currently the dumped object does not contain all
+        # attributes in the hash (Moo/Mo issue?), we need to access the
+        # attribute accessor method first to get them recorded in the hash. this
+        # will be fixed in the dump module in the future.
+        local $0 = $filename;
+        local @INC = ("lib", @INC);
+        eval "use " . ref($cli) . "()";
+        die if $@;
+
+        last unless $cli->read_config;
+        #$self->log_debug(["skipped file %s (script does not read config)", $filename]);
+        my @content;
+        my $config_filename = $cli->config_filename // $cli->program_name . ".conf";
+        my $config_dirs = $cli->{config_dirs} // ['~', '/etc'];
+
+        for my $config_dir (@{$config_dirs}) {
+            push @content, "$config_dir/$config_filename\n\n";
+        }
+
+        $self->add_text_to_section($document, join('', @content), 'FILES');
+        $modified++;
+    }
 
     if ($modified) {
         $self->log(["added POD sections from Rinci metadata for script '%s'", $filename]);
