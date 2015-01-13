@@ -135,6 +135,8 @@ sub _process_script {
 
     my ($self, $document, $input) = @_;
 
+    local @INC = ("lib", @INC);
+
     my $filename = $input->{filename};
 
     my $res = $self->dump_perinci_cmdline_script($input);
