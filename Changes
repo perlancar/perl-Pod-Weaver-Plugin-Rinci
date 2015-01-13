@@ -1,5 +1,13 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.29    2015-01-13 (PERLANCAR)
+
+        - No functional changes.
+
+        - [Bugfix] Forgot to add 'lib' to @INC in process_script, like in
+          process_module.
+
+
 0.28    2015-01-13 (PERLANCAR)
 
         - Add back the functionalities of adding FILES as well as ENVIRONMENT
