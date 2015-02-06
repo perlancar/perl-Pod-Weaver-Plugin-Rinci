@@ -284,18 +284,27 @@ sub _process_script {
         push @content, "C<*> marks required options.\n\n";
 
         if ($cli->{subcommands}) {
+            use experimental 'smartmatch';
+
             # currently categorize by subcommand instead of category
 
             my @sc_names = sort keys %clidocdata;
 
+            my $check_common_arg = sub {
+                my ($opts, $name) = @_;
+                !$opts->{$name}{arg} ||
+                    'common' ~~ @{ $opts->{$name}{tags} // []};
+            };
+
             # first display common options
             {
+                use experimental 'smartmatch';
                 my $opts = $clidocdata{ $sc_names[0] }{opts};
                 my @opts = sort {
                     (my $a_without_dash = $a) =~ s/^-+//;
                     (my $b_without_dash = $b) =~ s/^-+//;
                     lc($a) cmp lc($b);
-                } grep {!defined($opts->{$_}{arg})} keys %$opts;
+                } grep {$check_common_arg->($opts, $_)} keys %$opts;
                 push @content, "=head2 Common options\n\n";
                 push @content, "=over\n\n";
                 for (@opts) {
@@ -311,7 +320,7 @@ sub _process_script {
                     (my $a_without_dash = $a) =~ s/^-+//;
                     (my $b_without_dash = $b) =~ s/^-+//;
                     lc($a) cmp lc($b);
-                } grep {defined($opts->{$_}{arg})} keys %$opts;
+                } grep {!$check_common_arg->($opts, $_)} keys %$opts;
                 push @content, "=head2 Options for subcommand $sc_name\n\n";
                 push @content, "=over\n\n";
                 for (@opts) {
