@@ -308,6 +308,7 @@ sub _process_script {
                 push @content, "=head2 Common options\n\n";
                 push @content, "=over\n\n";
                 for (@opts) {
+                    next if 'hidden' ~~ @{ $opts->{$_}{tags} // [] };
                     push @content, _fmt_opt($_, $opts->{$_});
                 }
                 push @content, "=back\n\n";
@@ -324,6 +325,7 @@ sub _process_script {
                 push @content, "=head2 Options for subcommand $sc_name\n\n";
                 push @content, "=over\n\n";
                 for (@opts) {
+                    next if 'hidden' ~~ @{ $opts->{$_}{tags} // [] };
                     push @content, _fmt_opt($_, $opts->{$_});
                 }
                 push @content, "=back\n\n";
@@ -346,6 +348,7 @@ sub _process_script {
                 } @{ $cats{$cat} };
                 push @content, "=over\n\n";
                 for (@opts) {
+                    next if 'hidden' ~~ @{ $opts->{$_}{tags} // [] };
                     push @content, _fmt_opt($_, $opts->{$_});
                 }
                 push @content, "=back\n\n";
