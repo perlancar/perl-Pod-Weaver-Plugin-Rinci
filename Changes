@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.31    2015-02-18 (PERLANCAR)
+
+	- Avoid experimental warning.
+
+	- Observe 'hidden' tag to skip listing the options in POD.
+
+
 0.30    2015-02-06 (PERLANCAR)
 
 	- [ux] Put common subroutine options (those tagged with 'common')
