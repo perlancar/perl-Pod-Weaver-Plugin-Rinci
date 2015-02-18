@@ -132,6 +132,7 @@ sub _fmt_opt {
 
 sub _process_script {
     require Perinci::CmdLine::Dump;
+    use experimental 'smartmatch';
 
     my ($self, $document, $input) = @_;
 
@@ -284,7 +285,6 @@ sub _process_script {
         push @content, "C<*> marks required options.\n\n";
 
         if ($cli->{subcommands}) {
-            use experimental 'smartmatch';
 
             # currently categorize by subcommand instead of category
 
