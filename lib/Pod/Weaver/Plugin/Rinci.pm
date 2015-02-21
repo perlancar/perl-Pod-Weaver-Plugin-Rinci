@@ -266,10 +266,14 @@ sub _process_script {
             my $sc_spec = $cli->{subcommands}{$sc_name};
             my $meta = $metas{$sc_name};
             push @content, "=head2 B<$sc_name>\n\n";
-            push @content, "$meta->{summary}.\n\n" if $meta->{summary};
-            if ($meta->{description}) {
+
+            my $summary = $sc_spec->{summary} // $meta->{summary};
+            push @content, "$summary.\n\n" if $summary;
+
+            my $description = $sc_spec->{description} // $meta->{description};
+            if ($description) {
                 push @content,
-                    Markdown::To::POD::markdown_to_pod($meta->{description});
+                    Markdown::To::POD::markdown_to_pod($description);
                 push @content, "\n\n";
             }
         }
