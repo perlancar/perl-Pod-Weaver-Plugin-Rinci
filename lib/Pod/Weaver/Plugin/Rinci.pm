@@ -326,6 +326,7 @@ sub _process_script {
                     (my $b_without_dash = $b) =~ s/^-+//;
                     lc($a) cmp lc($b);
                 } grep {!$check_common_arg->($opts, $_)} keys %$opts;
+                next unless @opts;
                 push @content, "=head2 Options for subcommand $sc_name\n\n";
                 push @content, "=over\n\n";
                 for (@opts) {
