@@ -270,6 +270,8 @@ sub _process_script {
             my $summary = $sc_spec->{summary} // $meta->{summary};
             push @content, "$summary.\n\n" if $summary;
 
+            next if $sc_spec->{is_alias};
+
             my $description = $sc_spec->{description} // $meta->{description};
             if ($description) {
                 push @content,
@@ -320,6 +322,8 @@ sub _process_script {
 
             # display each subcommand's options (without the common options)
             for my $sc_name (@sc_names) {
+                my $sc_spec = $cli->{subcommands}{$sc_name};
+                next if $sc_spec->{is_alias};
                 my $opts = $clidocdata{$sc_name}{opts};
                 my @opts = sort {
                     (my $a_without_dash = $a) =~ s/^-+//;
