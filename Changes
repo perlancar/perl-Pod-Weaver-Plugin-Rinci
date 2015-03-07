@@ -1,5 +1,14 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.33    2015-03-08 (PERLANCAR)
+
+        - Skip producing description or options for alias subcommands, only put
+          in their summary.
+
+        - Skip producing 'Options for subcommand FOO' subsection if there are no
+          options for FOO subcommand.
+
+
 0.32    2015-02-21 (PERLANCAR)
 
 	- Use summary/description from subcommand spec before using from
