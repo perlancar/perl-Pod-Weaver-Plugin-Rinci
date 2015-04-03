@@ -404,7 +404,7 @@ sub _process_script {
         #$self->log_debug(["skipped file %s (script does not read config)", $filename]);
         my @content;
         my $config_filename = $cli->config_filename // $cli->program_name . ".conf";
-        my $config_dirs = $cli->{config_dirs} // ['~', '/etc'];
+        my $config_dirs = $cli->{config_dirs} // ['~/.config', '~', '/etc'];
 
         for my $config_dir (@{$config_dirs}) {
             push @content, "$config_dir/$config_filename\n\n";
