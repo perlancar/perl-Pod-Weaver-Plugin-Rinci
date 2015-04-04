@@ -70,12 +70,19 @@ sub _process_module {
         next unless $sectcontent =~ /\S/;
 
         # skip inserting FUNCTIONS if there are no functions
-        next if $sectname =~ /functions/i && $sectcontent !~ /^=head2/m;
+        next if $sectname eq 'FUNCTIONS' && $sectcontent !~ /^=head2/m;
 
         $found++;
         #$self->log(["generated POD section %s", $1]);
 
-        $self->add_text_to_section($document, $sectcontent, $sectname);
+        my %opts;
+        # position
+        if ($sectname eq 'FUNCTIONS') {
+            $opts{after_section} = ['DESCRIPTION'];
+            $opts{before_section} = ['HOMEPAGE'];
+        }
+
+        $self->add_text_to_section($document, $sectcontent, $sectname, \%opts);
     }
     if ($found) {
         $self->log(["added POD sections from Rinci metadata for module '%s'", $filename]);
@@ -238,7 +245,7 @@ sub _process_script {
         last unless @content;
 
         $self->add_text_to_section($document, join('', @content), 'SYNOPSIS',
-                                   {ignore=>1});
+                                   {ignore=>1, after_section=>'NAME'});
         $modified++;
     }
 
@@ -253,7 +260,7 @@ sub _process_script {
         push @content, "\n\n";
 
         $self->add_text_to_section($document, join('', @content), 'DESCRIPTION',
-                                   {ignore=>1});
+                                   {ignore=>1, after_section=>['SYNOPSIS','NAME']});
         $modified++;
     }
 
@@ -281,7 +288,7 @@ sub _process_script {
         }
 
         $self->add_text_to_section($document, join('', @content), 'SUBCOMMANDS',
-                                   {ignore=>1});
+                                   {ignore=>1, after_section=>['DESCRIPTION','SYNOPSIS']});
         $modified++;
     }
 
@@ -365,7 +372,7 @@ sub _process_script {
         }
 
         $self->add_text_to_section($document, join('', @content), 'OPTIONS',
-                                   {ignore=>1});
+                                   {ignore=>1, after_section=>['SUBCOMMANDS','DESCRIPTION']});
         $modified++;
     }
 
@@ -385,7 +392,8 @@ sub _process_script {
         my @content;
         push @content, $cli->env_name . "\n\n";
 
-        $self->add_text_to_section($document, join('', @content), 'ENVIRONMENT');
+        $self->add_text_to_section($document, join('', @content), 'ENVIRONMENT',
+                                   {before_section=>'HOMEPAGE'});
         $modified++;
     }
 
@@ -410,7 +418,8 @@ sub _process_script {
             push @content, "$config_dir/$config_filename\n\n";
         }
 
-        $self->add_text_to_section($document, join('', @content), 'FILES');
+        $self->add_text_to_section($document, join('', @content), 'FILES',
+                                   {after_section=>'ENVIRONMENT'});
         $modified++;
     }
 
