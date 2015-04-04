@@ -1,5 +1,13 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.34    2015-04-04 (PERLANCAR)
+
+	- Add before_section/after_section options when adding text to
+	  section to place created sections appropriately.
+
+	- Add ~/.config/ dir for FILES.
+
+
 0.33    2015-03-08 (PERLANCAR)
 
         - Skip producing description or options for alias subcommands, only put
