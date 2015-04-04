@@ -245,7 +245,7 @@ sub _process_script {
         last unless @content;
 
         $self->add_text_to_section($document, join('', @content), 'SYNOPSIS',
-                                   {ignore=>1, after_section=>'NAME'});
+                                   {ignore=>1, after_section=>['VERSION','NAME']});
         $modified++;
     }
 
@@ -260,7 +260,7 @@ sub _process_script {
         push @content, "\n\n";
 
         $self->add_text_to_section($document, join('', @content), 'DESCRIPTION',
-                                   {ignore=>1, after_section=>['SYNOPSIS','NAME']});
+                                   {ignore=>1, after_section=>['SYNOPSIS','VERSION','NAME']});
         $modified++;
     }
 
