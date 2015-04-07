@@ -137,6 +137,33 @@ sub _fmt_opt {
     join "", @res;
 }
 
+sub _list_config_params {
+    my ($self, $clidocdata, $filter) = @_;
+
+    my $opts = $clidocdata->{opts};
+    my %param2opts;
+    for (keys %$opts) {
+        my $ospec = $opts->{$_};
+        next unless $ospec->{common_opt} && $ospec->{common_opt_spec}{is_settable_via_config};
+        next if $filter && !$filter->($ospec);
+        my $oname = $ospec->{opt_parsed}{opts}[0];
+        $oname = length($oname) > 1 ? "--$oname" : "-$oname";
+        $param2opts{ $ospec->{common_opt} } = $oname;
+    }
+    for (keys %$opts) {
+        my $ospec = $opts->{$_};
+        next unless $ospec->{arg};
+        next if $ospec->{main_opt};
+        next if $filter && !$filter->($ospec);
+        my $oname = $ospec->{opt_parsed}{opts}[0];
+        $oname = length($oname) > 1 ? "--$oname" : "-$oname";
+        my $confname = $param2opts{$_} ?
+            "$ospec->{arg}.arg" : $ospec->{arg};
+        $param2opts{$confname} = $oname;
+    }
+    \%param2opts;
+}
+
 sub _process_script {
     require Perinci::CmdLine::Dump;
     use experimental 'smartmatch';
@@ -292,6 +319,8 @@ sub _process_script {
         $modified++;
     }
 
+    my @sc_names = sort keys %clidocdata;
+
     # insert OPTIONS section
     {
         my @content;
@@ -301,12 +330,9 @@ sub _process_script {
 
             # currently categorize by subcommand instead of category
 
-            my @sc_names = sort keys %clidocdata;
-
             my $check_common_arg = sub {
                 my ($opts, $name) = @_;
-                !$opts->{$name}{arg} ||
-                    'common' ~~ @{ $opts->{$name}{tags} // []};
+                'common' ~~ @{ $opts->{$name}{tags} // []};
             };
 
             # first display options tagged with 'common' (that are supposed to
@@ -403,7 +429,7 @@ sub _process_script {
         $modified++;
     }
 
-    # insert FILES section
+    # insert CONFIGURATION FILE & FILES sections
     {
         # workaround because currently the dumped object does not contain all
         # attributes in the hash (Moo/Mo issue?), we need to access the
@@ -414,6 +440,95 @@ sub _process_script {
         eval "use " . ref($cli) . "()";
         die if $@;
 
+        last unless $cli->read_config;
+
+        my $config_filename;
+        my $config_dirs;
+
+        # FILES section
+        {
+            my @content;
+            $config_filename = $cli->config_filename // $cli->program_name . ".conf";
+            $config_dirs = $cli->{config_dirs} // ['~/.config', '~', '/etc'];
+
+            for my $config_dir (@{$config_dirs}) {
+                push @content, "$config_dir/$config_filename\n\n";
+            }
+
+            $self->add_text_to_section($document, join('', @content), 'FILES',
+                                       {after_section=>'ENVIRONMENT'});
+        }
+
+        # CONFIGURATION FILE section
+        {
+            my @content;
+
+            my @files_list = map {"C<$_/$config_filename>"} @$config_dirs;
+            if (@files_list > 2) {
+                my $is_last = 1;
+                for (reverse 1..@files_list-1) {
+                    splice @files_list, $_, 0, ($is_last ? " or " : ", ");
+                    $is_last = 0;
+                }
+            } elsif (@files_list > 2) {
+                splice @files_list, 1, 0, " or ";
+            }
+
+            push @content, (
+                "This script can read configuration file, which by default is ",
+                "searched at ", @files_list, " (can be changed by specifying C<--config-path>). ",
+                "All found files will be read and merged.", "\n\n",
+
+                "Configuration file is in the format of L<IOD>, which is basically INI with ",
+                "some extra features. ",
+                ($cli->{subcommands} ? "Section names map to subcommand names. ":""), "\n\n",
+
+                "You can put multiple profiles in a single file by using section names like C<[profile=SOMENAME]>",
+                ($cli->{subcommands} ? " or C<[SUBCOMMAND_NAME profile=SOMENAME]>":""), ". ",
+                "Those sections will only be read if you specify the matching C<--config-profile SOMENAME>.", "\n\n",
+
+                "List of available configuration parameters:\n\n",
+            );
+
+            if ($cli->{subcommands}) {
+                # first list the options tagged with 'common'
+                push @content, "=head2 Common for all subcommands\n\n";
+                my $param2opts = $self->_list_config_params(
+                    $clidocdata{$sc_names[0]},
+                    sub { 'common' ~~ @{ $_[0]->{tags} // []} });
+                for (sort keys %$param2opts) {
+                    push @content, " $_ (see $param2opts->{$_})\n";
+                }
+                push @content, "\n";
+
+                # now list the options for each subcommand
+                for my $scn (@sc_names) {
+                    push @content, "=head2 For subcommand '$scn'\n\n";
+                    $param2opts = $self->_list_config_params(
+                        $clidocdata{$scn},
+                        sub { !('common' ~~ @{ $_[0]->{tags} // []}) });
+                    for (sort keys %$param2opts) {
+                        push @content, " $_ (see $param2opts->{$_})\n";
+                    }
+                    push @content, "\n";
+                }
+            } else {
+                my $param2opts = $self->_list_config_params($clidocdata{''});
+                for (sort keys %$param2opts) {
+                    push @content, " $_ (see $param2opts->{$_})\n";
+                }
+                push @content, "\n";
+            }
+
+            $self->add_text_to_section($document, join('', @content), 'CONFIGURATION FILE',
+                                       {before_section=>'FILES'});
+        }
+
+        $modified++;
+    }
+
+    # insert FILES section
+    {
         last unless $cli->read_config;
         #$self->log_debug(["skipped file %s (script does not read config)", $filename]);
         my @content;
@@ -538,6 +653,12 @@ description.
 If the script's POD does not already have his section, command-line options for
 the script will be listed here. If script has subcommands, the options will be
 categorized per subcommand.
+
+=item * CONFIGURATION
+
+If the script's POD does not already have his section, general information about
+configuration files and available configuration parameters will be listed here.
+If script has subcommands, the parameters will be categorized per subcommand.
 
 =item * FILES
 
