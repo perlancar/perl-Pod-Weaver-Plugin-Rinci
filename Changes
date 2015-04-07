@@ -1,5 +1,10 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.38    2015-04-07 (PERLANCAR)
+
+	- Skip listing config params for alias subcommands.
+
+
 0.37    2015-04-07 (PERLANCAR)
 
 	- Add text explaining the FOO_OPT in Environment section.
