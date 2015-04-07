@@ -507,10 +507,12 @@ sub _process_script {
                 push @content, "\n";
 
                 # now list the options for each subcommand
-                for my $scn (@sc_names) {
-                    push @content, "=head2 For subcommand '$scn'\n\n";
+                for my $sc_name (@sc_names) {
+                    my $sc_spec = $cli->{subcommands}{$sc_name};
+                    next if $sc_spec->{is_alias};
+                    push @content, "=head2 For subcommand '$sc_name'\n\n";
                     $param2opts = $self->_list_config_params(
-                        $clidocdata{$scn},
+                        $clidocdata{$sc_name},
                         sub { !('common' ~~ @{ $_[0]->{tags} // []}) });
                     for (sort keys %$param2opts) {
                         push @content, " $_ (see $param2opts->{$_})\n";
