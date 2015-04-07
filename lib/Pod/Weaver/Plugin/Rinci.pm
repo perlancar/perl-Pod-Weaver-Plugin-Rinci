@@ -309,7 +309,8 @@ sub _process_script {
                     'common' ~~ @{ $opts->{$name}{tags} // []};
             };
 
-            # first display common options
+            # first display options tagged with 'common' (that are supposed to
+            # be the same across subcommands)
             {
                 use experimental 'smartmatch';
                 my $opts = $clidocdata{ $sc_names[0] }{opts};
@@ -327,7 +328,8 @@ sub _process_script {
                 push @content, "=back\n\n";
             }
 
-            # display each subcommand's options (without the common options)
+            # display each subcommand's options (without the options tagged as
+            # 'common')
             for my $sc_name (@sc_names) {
                 my $sc_spec = $cli->{subcommands}{$sc_name};
                 next if $sc_spec->{is_alias};
