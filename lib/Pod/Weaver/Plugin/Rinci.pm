@@ -351,19 +351,23 @@ sub _process_script {
         } else {
             my $opts = $clidocdata{''}{opts};
             # find all the categories
-            my %cats; # val=[options...]
+            my %options_by_cat; # val=[options...]
             for (keys %$opts) {
-                push @{ $cats{$opts->{$_}{category}} }, $_;
+                push @{ $options_by_cat{$opts->{$_}{category}} }, $_;
             }
-            for my $cat (sort keys %cats) {
+            my $cats_spec = $clidocdata{''}{option_categories};
+            for my $cat (sort {
+                ($cats_spec->{$a}{order} // 50) <=> ($cats_spec->{$b}{order} // 50)
+                    || $a cmp $b }
+                             keys %options_by_cat) {
                 push @content, "=head2 $cat\n\n"
-                    unless keys(%cats) == 1;
+                    unless keys(%options_by_cat) == 1;
 
                 my @opts = sort {
                     (my $a_without_dash = $a) =~ s/^-+//;
                     (my $b_without_dash = $b) =~ s/^-+//;
                     lc($a) cmp lc($b);
-                } @{ $cats{$cat} };
+                } @{ $options_by_cat{$cat} };
                 push @content, "=over\n\n";
                 for (@opts) {
                     next if 'hidden' ~~ @{ $opts->{$_}{tags} // [] };
