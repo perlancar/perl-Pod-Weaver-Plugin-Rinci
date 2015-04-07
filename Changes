@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.36    2015-04-07 (PERLANCAR)
+
+	- Add Configuration section for scripts, containing general
+	  information as well as list of available parameters.
+
+
 0.35    2015-04-07 (PERLANCAR)
 
 	- Properly order categories according to the ordering information
