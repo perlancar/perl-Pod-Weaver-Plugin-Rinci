@@ -479,6 +479,8 @@ sub _process_script {
                 "searched at ", @files_list, " (can be changed by specifying C<--config-path>). ",
                 "All found files will be read and merged.", "\n\n",
 
+                "To disable searching for configuration files, pass C<--no-config>.\n\n",
+
                 "Configuration file is in the format of L<IOD>, which is basically INI with ",
                 "some extra features. ",
                 ($cli->{subcommands} ? "Section names map to subcommand names. ":""), "\n\n",
