@@ -332,11 +332,15 @@ sub _process_script {
 
             my $check_common_arg = sub {
                 my ($opts, $name) = @_;
-                'common' ~~ @{ $opts->{$name}{tags} // []};
+                return 1 if 'common' ~~ @{ $opts->{$name}{tags} // []};
+                return 1 if !$opts->{$name}{arg};
+                0;
             };
 
-            # first display options tagged with 'common' (that are supposed to
-            # be the same across subcommands)
+            # first display options tagged with 'common' as well as common
+            # option (non-function argument option, like --format or
+            # --log-level). these are supposed to be the same across
+            # subcommands.
             {
                 use experimental 'smartmatch';
                 my $opts = $clidocdata{ $sc_names[0] }{opts};
@@ -496,11 +500,13 @@ sub _process_script {
             );
 
             if ($cli->{subcommands}) {
-                # first list the options tagged with 'common'
+                # first list the options tagged with 'common' and common options
+                # (non-function argument options, like --format or --log-level)
+                # which are supposed to be the same across subcommands.
                 push @content, "=head2 Common for all subcommands\n\n";
                 my $param2opts = $self->_list_config_params(
                     $clidocdata{$sc_names[0]},
-                    sub { 'common' ~~ @{ $_[0]->{tags} // []} });
+                    sub { 'common' ~~ @{ $_[0]->{tags} // []} || !$_[0]->{arg} });
                 for (sort keys %$param2opts) {
                     push @content, " $_ (see $param2opts->{$_})\n";
                 }
@@ -513,7 +519,7 @@ sub _process_script {
                     push @content, "=head2 For subcommand '$sc_name'\n\n";
                     $param2opts = $self->_list_config_params(
                         $clidocdata{$sc_name},
-                        sub { !('common' ~~ @{ $_[0]->{tags} // []}) });
+                        sub { !('common' ~~ @{ $_[0]->{tags} // []}) && $_[0]->{arg} });
                     for (sort keys %$param2opts) {
                         push @content, " $_ (see $param2opts->{$_})\n";
                     }
