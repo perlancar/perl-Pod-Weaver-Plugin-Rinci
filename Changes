@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.39    2015-04-08 (PERLANCAR)
+
+	- Put common options (non-function argument options like --format &
+	  --log-level) as common/not per-subcommand.
+
+
 0.38    2015-04-07 (PERLANCAR)
 
 	- Skip listing config params for alias subcommands.
