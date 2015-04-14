@@ -540,23 +540,6 @@ sub _process_script {
         $modified++;
     }
 
-    # insert FILES section
-    {
-        last unless $cli->read_config;
-        #$self->log_debug(["skipped file %s (script does not read config)", $filename]);
-        my @content;
-        my $config_filename = $cli->config_filename // $cli->program_name . ".conf";
-        my $config_dirs = $cli->{config_dirs} // ['~/.config', '~', '/etc'];
-
-        for my $config_dir (@{$config_dirs}) {
-            push @content, "$config_dir/$config_filename\n\n";
-        }
-
-        $self->add_text_to_section($document, join('', @content), 'FILES',
-                                   {after_section=>'ENVIRONMENT'});
-        $modified++;
-    }
-
     if ($modified) {
         $self->log(["added POD sections from Rinci metadata for script '%s'", $filename]);
     }
