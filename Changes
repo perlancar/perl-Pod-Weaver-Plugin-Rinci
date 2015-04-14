@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.40    2015-04-14 (PERLANCAR)
+
+	- [Bugfix] Remove duplicate code, resulting duplicate text in FILES
+	  section.
+
+
 0.39    2015-04-08 (PERLANCAR)
 
 	- Put common options (non-function argument options like --format &
