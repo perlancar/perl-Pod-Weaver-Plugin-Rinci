@@ -382,8 +382,10 @@ sub _process_script {
             my $opts = $clidocdata{''}{opts};
             # find all the categories
             my %options_by_cat; # val=[options...]
-            for (keys %$opts) {
-                push @{ $options_by_cat{$opts->{$_}{category}} }, $_;
+            for my $optkey (keys %$opts) {
+                for my $cat (@{ $opts->{$optkey}{categories} }) {
+                    push @{ $options_by_cat{$cat} }, $optkey;
+                }
             }
             my $cats_spec = $clidocdata{''}{option_categories};
             for my $cat (sort {
