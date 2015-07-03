@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.41    2015-07-04 (PERLANCAR)
+
+	- Support showing the same option in multiple categories if that
+	  option has multiple category:X tags.
+
+
 0.40    2015-04-14 (PERLANCAR)
 
 	- [Bugfix] Remove duplicate code, resulting duplicate text in FILES
