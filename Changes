@@ -1,5 +1,10 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.42    2015-07-27 (PERLANCAR)
+
+	- Tweak format of generated ENVIRONMENT section.
+
+
 0.41    2015-07-04 (PERLANCAR)
 
 	- Support showing the same option in multiple categories if that
