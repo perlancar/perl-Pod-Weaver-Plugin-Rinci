@@ -428,10 +428,8 @@ sub _process_script {
         last unless $cli->read_env;
         #$self->log_debug(["skipped file %s (script does not read env)", $filename]);
         my @content;
-        push @content, "=over\n\n";
-        push @content, "=item * ", $cli->env_name, "\n\n";
+        push @content, "=head2 ", $cli->env_name, " => str\n\n";
         push @content, "Specify additional command-line options\n\n";
-        push @content, "=back\n\n";
 
         $self->add_text_to_section($document, join('', @content), 'ENVIRONMENT',
                                    {before_section=>'HOMEPAGE'});
