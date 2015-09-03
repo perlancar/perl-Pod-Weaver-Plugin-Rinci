@@ -425,8 +425,6 @@ sub _process_script {
         eval "use " . ref($cli) . "()";
         die if $@;
 
-        use DD; dd $cli;
-
         last unless $cli->read_env;
         #$self->log_debug(["skipped file %s (script does not read env)", $filename]);
 

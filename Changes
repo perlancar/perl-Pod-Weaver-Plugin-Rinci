@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.43    2015-09-03 (PERLANCAR)
+
+	- Workaround to avoid undef in dump env_name and
+	  config_filename/program_name.
+
+
 0.42    2015-07-27 (PERLANCAR)
 
 	- Tweak format of generated ENVIRONMENT section.
