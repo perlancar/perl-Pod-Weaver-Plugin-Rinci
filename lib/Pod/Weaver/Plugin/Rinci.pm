@@ -425,10 +425,19 @@ sub _process_script {
         eval "use " . ref($cli) . "()";
         die if $@;
 
+        use DD; dd $cli;
+
         last unless $cli->read_env;
         #$self->log_debug(["skipped file %s (script does not read env)", $filename]);
+
+        my $env_name = $cli->env_name;
+        if (!$env_name) {
+            $env_name = uc($prog);
+            $env_name =~ s/\W+/_/g;
+        }
+
         my @content;
-        push @content, "=head2 ", $cli->env_name, " => str\n\n";
+        push @content, "=head2 ", $env_name, " => str\n\n";
         push @content, "Specify additional command-line options\n\n";
 
         $self->add_text_to_section($document, join('', @content), 'ENVIRONMENT',
@@ -455,7 +464,9 @@ sub _process_script {
         # FILES section
         {
             my @content;
-            $config_filename = $cli->config_filename // $cli->program_name . ".conf";
+            $config_filename = $cli->config_filename //
+                ($cli->program_name ? $cli->program_name . ".conf" : undef) //
+                $prog . ".conf";
             $config_dirs = $cli->{config_dirs} // ['~/.config', '~', '/etc'];
 
             for my $config_dir (@{$config_dirs}) {
