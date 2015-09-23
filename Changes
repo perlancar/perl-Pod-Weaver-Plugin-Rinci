@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.44    2015-09-23 (PERLANCAR)
+
+        - Show example's result (if example spec does not specify result, will
+          call function via Riap to get the result).
+
+
 0.43    2015-09-03 (PERLANCAR)
 
 	- Workaround to avoid undef in dump env_name and
