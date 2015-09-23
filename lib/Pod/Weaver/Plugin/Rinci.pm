@@ -57,7 +57,7 @@ sub _process_module {
     my $cmetas = $res->[2];
 
     my $doc = Perinci::To::POD->new(
-        name=>$package, meta=>$meta, child_metas=>$cmetas);
+        name=>$package, meta=>$meta, child_metas=>$cmetas, url=>$url);
     $doc->delete_doc_section('summary'); # already handled by other plugins
     $doc->delete_doc_section('version'); # ditto
     my $pod_text = $doc->gen_doc;
