@@ -195,6 +195,7 @@ sub _process_script {
     # is stored in key '')
     my %metas; # key = subcommand name
     my %clidocdata; # key = subcommand name
+    my %urls; # key = subcommand name
     if ($cli->{subcommands}) {
         if (ref($cli->{subcommands}) eq 'CODE') {
             die "Script '$filename': sorry, coderef 'subcommands' not ".
@@ -203,6 +204,7 @@ sub _process_script {
         for my $sc_name (keys %{ $cli->{subcommands} }) {
             my $sc_spec = $cli->{subcommands}{$sc_name};
             my $url = $sc_spec->{url};
+            $urls{$sc_name} = $url;
             my $res = $pa->request(meta => $url);
             die "Can't meta $url (subcommand $sc_name): $res->[0] - $res->[1]"
                 unless $res->[0] == 200;
@@ -221,6 +223,7 @@ sub _process_script {
         }
     } else {
         my $url = $cli->{url};
+        $urls{''} = $url;
         my $res = $pa->request(meta => $url);
         die "Can't meta $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
         my $meta = $res->[2];
@@ -258,15 +261,53 @@ sub _process_script {
 
         my @examples;
         for my $sc_name (sort keys %clidocdata) {
-            push @examples, @{ $clidocdata{$sc_name}{examples} };
+            my $i = 1;
+            for my $eg (@{ $clidocdata{$sc_name}{examples} }) {
+                # add pointer to subcommand, we need it later to show result
+                $eg->{_sc_name} = $sc_name;
+                $eg->{_i} = $i;
+                push @examples, $eg;
+                $i++;
+            }
         }
         if (@examples) {
             push @content, "Examples:\n\n";
             for my $eg (@examples) {
+                my $url = $urls{ $eg->{_sc_name} };
+                my $meta = $metas{ $eg->{_sc_name} };
                 push @content, "$eg->{summary}:\n\n" if $eg->{summary};
                 my $cmdline = $eg->{cmdline};
                 $cmdline =~ s/\[\[prog\]\]/$prog/;
-                push @content, " % $cmdline\n\n";
+                push @content, " % $cmdline\n";
+
+              SHOW_RESULT:
+                {
+                    my $res;
+                    if (exists $eg->{result}) {
+                        $res = $eg->{result};
+                    } else {
+                        my %extra;
+                        if ($eg->{example_spec}{argv}) {
+                            $extra{argv} = $eg->{example_spec}{argv};
+                        } elsif ($eg->{example_spec}{args}) {
+                            $extra{args} = $eg->{example_spec}{args};
+                        } else {
+                            $self->log_debug(["Example #%d (subcommand %s) doesn't provide args/argv, skipped showing result", $eg->{_i}, $eg->{_sc_name}]);
+                            last SHOW_RESULT;
+                        }
+                        $res = $pa->request(call => $url, \%extra);
+                        my $naked = $meta->{result_naked};
+                        my $format = $res->[3]{'cmdline.default_format'} // $cli->{default_format} // 'text-pretty';
+                        if ($naked) {
+                            $res = [200, "OK (envelope added automatically)", $res];
+                        }
+                        require Perinci::Result::Format::Lite;
+                        my $fres = Perinci::Result::Format::Lite::format($res, $format);
+                        $fres =~ s/^/ /gm;
+                        push @content, $fres;
+                    }
+                }
+                push @content, "\n";
             }
         }
         last unless @content;
