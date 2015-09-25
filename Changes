@@ -1,5 +1,10 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.45    2015-09-25 (PERLANCAR)
+
+        - Observe example spec's x.doc.show_result.
+
+
 0.44    2015-09-23 (PERLANCAR)
 
         - Show example's result (if example spec does not specify result, will
