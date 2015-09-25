@@ -283,6 +283,7 @@ sub _process_script {
               SHOW_RESULT:
                 {
                     my $res;
+                    last unless $eg->{'x.doc.show_result'} // 1;
                     if (exists $eg->{result}) {
                         $res = $eg->{result};
                     } else {
