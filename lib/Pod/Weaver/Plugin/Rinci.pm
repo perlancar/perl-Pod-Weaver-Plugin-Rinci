@@ -56,8 +56,31 @@ sub _process_module {
     die "Can't child_metas $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
     my $cmetas = $res->[2];
 
+    my $exports = {};
+    {
+        no strict 'refs';
+        my $uses_exporter_mod = @{"$package\::EXPORT"} || @{"$package\::EXPORT_OK"};
+        for my $funcname (keys %$cmetas) {
+            next unless $funcname =~ /\A\w+\z/;
+            my $funcmeta = $cmetas->{$funcname};
+            my $export = 0;
+            if ($uses_exporter_mod &&
+                    grep {$_ eq $funcname} @{"$package\::EXPORT"}) {
+                $export = 1;
+            } elsif ($uses_exporter_mod) {
+                $export = -1;
+            } elsif (grep {$_ eq 'export:default'} @{ $funcmeta->{tags} // [] }) {
+                $export = 1;
+            } elsif (grep {$_ eq 'export:never'} @{ $funcmeta->{tags} // [] }) {
+                $export = -1;
+            }
+            $exports->{$funcname} = $export;
+        }
+    }
+    use DD; dd $exports;
     my $doc = Perinci::To::POD->new(
-        name=>$package, meta=>$meta, child_metas=>$cmetas, url=>$url);
+        name=>$package, meta=>$meta, child_metas=>$cmetas, url=>$url,
+        exports=>$exports);
     $doc->delete_doc_section('summary'); # already handled by other plugins
     $doc->delete_doc_section('version'); # ditto
     my $pod_text = $doc->gen_doc;
