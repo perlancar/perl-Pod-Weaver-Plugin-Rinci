@@ -77,7 +77,6 @@ sub _process_module {
             $exports->{$funcname} = $export;
         }
     }
-    use DD; dd $exports;
     my $doc = Perinci::To::POD->new(
         name=>$package, meta=>$meta, child_metas=>$cmetas, url=>$url,
         exports=>$exports);

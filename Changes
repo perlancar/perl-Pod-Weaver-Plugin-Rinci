@@ -1,5 +1,10 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.46    2015-09-29 (PERLANCAR)
+
+	- Supply export behaviour of functions to Perinci::To::POD.
+
+
 0.45    2015-09-25 (PERLANCAR)
 
         - Observe example spec's x.doc.show_result.
