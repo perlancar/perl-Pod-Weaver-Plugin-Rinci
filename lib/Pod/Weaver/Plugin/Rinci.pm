@@ -63,10 +63,13 @@ sub _process_module {
         for my $funcname (keys %$cmetas) {
             next unless $funcname =~ /\A\w+\z/;
             my $funcmeta = $cmetas->{$funcname};
-            my $export = 0;
+            my $export = -1;
             if ($uses_exporter_mod &&
                     grep {$_ eq $funcname} @{"$package\::EXPORT"}) {
                 $export = 1;
+            } elsif ($uses_exporter_mod &&
+                    grep {$_ eq $funcname} @{"$package\::EXPORT_OK"}) {
+                $export = 0;
             } elsif ($uses_exporter_mod) {
                 $export = -1;
             } elsif (grep {$_ eq 'export:default'} @{ $funcmeta->{tags} // [] }) {
