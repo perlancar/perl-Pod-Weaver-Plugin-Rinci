@@ -1,5 +1,10 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.47    2015-10-06 (PERLANCAR)
+
+	- [Bugfix] Read @EXPORT_OK to check if function is exportable.
+
+
 0.46    2015-09-29 (PERLANCAR)
 
 	- Supply export behaviour of functions to Perinci::To::POD.
