@@ -308,7 +308,6 @@ sub _process_script {
               SHOW_RESULT:
                 {
                     my $res;
-                    use DD; dd $eg;
                     last unless $eg->{example_spec}{'x.doc.show_result'} // 1;
                     if (exists $eg->{result}) {
                         $res = $eg->{result};

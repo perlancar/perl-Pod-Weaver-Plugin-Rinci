@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.48    2015-11-20 (PERLANCAR)
+
+	- [Bugfix] Referred to the wrong variable when checking
+	  x.doc.show_result example attribute.
+
+
 0.47    2015-10-06 (PERLANCAR)
 
 	- [Bugfix] Read @EXPORT_OK to check if function is exportable.
