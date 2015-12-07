@@ -592,7 +592,7 @@ sub _process_script {
                 for my $sc_name (@sc_names) {
                     my $sc_spec = $cli->{subcommands}{$sc_name};
                     next if $sc_spec->{is_alias};
-                    push @content, "=head2 For subcommand '$sc_name'\n\n";
+                    push @content, "=head2 Configuration for subcommand '$sc_name'\n\n";
                     $param2opts = $self->_list_config_params(
                         $clidocdata{$sc_name},
                         sub { !('common' ~~ @{ $_[0]->{tags} // []}) && $_[0]->{arg} });
