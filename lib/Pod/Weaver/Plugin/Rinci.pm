@@ -322,11 +322,7 @@ sub _process_script {
                             last SHOW_RESULT;
                         }
                         $res = $pa->request(call => $url, \%extra);
-                        my $naked = $meta->{result_naked};
                         my $format = $res->[3]{'cmdline.default_format'} // $cli->{default_format} // 'text-pretty';
-                        if ($naked) {
-                            $res = [200, "OK (envelope added automatically)", $res];
-                        }
                         require Perinci::Result::Format::Lite;
                         my $fres = Perinci::Result::Format::Lite::format($res, $format);
                         $fres =~ s/^/ /gm;
