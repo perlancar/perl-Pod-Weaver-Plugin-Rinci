@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.51    2015-12-18 (PERLANCAR)
+
+	- No functional changes.
+
+	- Bump prereq version Perinci::To::POD 0.68 -> 0.70.
+
+
 0.50    2015-12-17 (PERLANCAR)
 
 	- [Bugfix] No need to add envelope again because the Riap client
