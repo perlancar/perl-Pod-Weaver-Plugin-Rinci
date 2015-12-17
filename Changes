@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.50    2015-12-17 (PERLANCAR)
+
+	- [Bugfix] No need to add envelope again because the Riap client
+	  will already add envelope.
+
+
 0.49    2015-12-08 (PERLANCAR)
 
         - Wording for POD header for configuration for subcommand: from just
