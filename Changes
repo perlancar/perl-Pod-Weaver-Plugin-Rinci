@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.52    2015-12-25 (PERLANCAR)
+
+	- [Bugfix] invoke module's import() first, so modules using
+	  Exporter::Rinci can work (because it populates @EXPORT or
+	  @EXPORT_OK in import()).
+
+
 0.51    2015-12-18 (PERLANCAR)
 
 	- No functional changes.
