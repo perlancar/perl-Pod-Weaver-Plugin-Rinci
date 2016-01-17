@@ -104,8 +104,14 @@ sub _process_module {
         my %opts;
         # position
         if ($sectname eq 'FUNCTIONS') {
-            $opts{after_section} = ['DESCRIPTION'];
-            $opts{before_section} = ['HOMEPAGE'];
+            $opts{after_section} = [
+                'DESCRIPTION',
+            ];
+            # make sure we don't put it too below
+            $opts{before_section} = [
+                'SEE ALSO',
+                'HOMEPAGE',
+            ];
         }
 
         $self->add_text_to_section($document, $sectcontent, $sectname, \%opts);
@@ -335,8 +341,20 @@ sub _process_script {
         }
         last unless @content;
 
-        $self->add_text_to_section($document, join('', @content), 'SYNOPSIS',
-                                   {ignore=>1, after_section=>['VERSION','NAME']});
+        $self->add_text_to_section(
+            $document, join('', @content), 'SYNOPSIS',
+            {
+                ignore=>1,
+                after_section => [
+                    'VERSION',
+                    'NAME',
+                ],
+                # just to make we don't put it too below
+                before_section => [
+                    'DESCRIPTION',
+                    'SEE ALSO',
+                ],
+            });
         $modified++;
     }
 
@@ -350,8 +368,20 @@ sub _process_script {
             Markdown::To::POD::markdown_to_pod($metas{''}{description});
         push @content, "\n\n";
 
-        $self->add_text_to_section($document, join('', @content), 'DESCRIPTION',
-                                   {ignore=>1, after_section=>['SYNOPSIS','VERSION','NAME']});
+        $self->add_text_to_section(
+            $document, join('', @content), 'DESCRIPTION',
+            {
+                ignore=>1,
+                after_section=>[
+                    'SYNOPSIS',
+                    'VERSION',
+                    'NAME',
+                ],
+                # make sure we don't put it too below
+                before_section => [
+                    'SEE ALSO',
+                ],
+            });
         $modified++;
     }
 
@@ -378,8 +408,20 @@ sub _process_script {
             }
         }
 
-        $self->add_text_to_section($document, join('', @content), 'SUBCOMMANDS',
-                                   {ignore=>1, after_section=>['DESCRIPTION','SYNOPSIS']});
+        $self->add_text_to_section(
+            $document, join('', @content), 'SUBCOMMANDS',
+            {
+                ignore=>1,
+                after_section => [
+                    'DESCRIPTION',
+                    'SYNOPSIS',
+                ],
+                # make sure we don't put it too below
+                before_section => [
+                    'OPTIONS',
+                    'SEE ALSO',
+                ],
+            });
         $modified++;
     }
 
@@ -473,8 +515,24 @@ sub _process_script {
             }
         }
 
-        $self->add_text_to_section($document, join('', @content), 'OPTIONS',
-                                   {ignore=>1, after_section=>['SUBCOMMANDS','DESCRIPTION']});
+        $self->add_text_to_section(
+            $document, join('', @content), 'OPTIONS',
+            {
+                ignore => 1,
+                after_section => [
+                    'SUBCOMMANDS',
+                    'DESCRIPTION',
+                ],
+                # make sure we don't put it too below
+                before_section => [
+                    'COMPLETION',
+                    'ENVIRONMENT',
+                    'CONFIGURATION FILE',
+                    'HOMEPAGE',
+                    'SEE ALSO',
+                    'AUTHOR',
+                ],
+            });
         $modified++;
     }
 
@@ -502,8 +560,18 @@ sub _process_script {
         push @content, "=head2 ", $env_name, " => str\n\n";
         push @content, "Specify additional command-line options\n\n";
 
-        $self->add_text_to_section($document, join('', @content), 'ENVIRONMENT',
-                                   {before_section=>'HOMEPAGE'});
+        $self->add_text_to_section(
+            $document, join('', @content), 'ENVIRONMENT',
+            {
+                after_section => [
+                    'OPTIONS',
+                ],
+                # make sure we don't put it too below
+                before_section => [
+                    'HOMEPAGE',
+                    'SEE ALSO',
+                ],
+            });
         $modified++;
     }
 
@@ -535,8 +603,15 @@ sub _process_script {
                 push @content, "$config_dir/$config_filename\n\n";
             }
 
-            $self->add_text_to_section($document, join('', @content), 'FILES',
-                                       {after_section=>'ENVIRONMENT'});
+            $self->add_text_to_section(
+                $document, join('', @content), 'FILES',
+                {
+                    after_section => 'ENVIRONMENT',
+                    # make sure we don't put it too below
+                    before_section => [
+                        'SEE ALSO',
+                    ],
+                });
         }
 
         # CONFIGURATION FILE section
@@ -606,8 +681,13 @@ sub _process_script {
                 push @content, "\n";
             }
 
-            $self->add_text_to_section($document, join('', @content), 'CONFIGURATION FILE',
-                                       {before_section=>'FILES'});
+            $self->add_text_to_section(
+                $document, join('', @content), 'CONFIGURATION FILE',
+                {
+                    before_section=>[
+                        'FILES',
+                    ],
+                });
         }
 
         $modified++;
