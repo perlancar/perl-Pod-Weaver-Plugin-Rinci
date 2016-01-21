@@ -588,19 +588,30 @@ sub _process_script {
 
         last unless $cli->read_config;
 
-        my $config_filename;
+        my $config_filenames = [];
         my $config_dirs;
+        my @files;
 
         # FILES section
         {
             my @content;
-            $config_filename = $cli->config_filename //
-                ($cli->program_name ? $cli->program_name . ".conf" : undef) //
-                $prog . ".conf";
+            if ($cli->config_filename) {
+                push @$config_filenames,
+                    ref($cli->config_filename) eq 'ARRAY' ?
+                    @{ $cli->config_filename } : $cli->config_filename;
+            } elsif ($cli->program_name) {
+                push @$config_filenames, $cli->program_name . ".conf";
+            } else {
+                push @$config_filenames, $prog . ".conf";
+            }
             $config_dirs = $cli->{config_dirs} // ['~/.config', '~', '/etc'];
 
-            for my $config_dir (@{$config_dirs}) {
-                push @content, "$config_dir/$config_filename\n\n";
+            for my $config_dir (@$config_dirs) {
+                for my $config_filename (@$config_filenames) {
+                    my $p = "$config_dir/$config_filename";
+                    push @files, $p;
+                    push @content, "$p\n\n";
+                }
             }
 
             $self->add_text_to_section(
@@ -618,7 +629,7 @@ sub _process_script {
         {
             my @content;
 
-            my @files_list = map {"C<$_/$config_filename>"} @$config_dirs;
+            my @files_list = @files;
             if (@files_list > 2) {
                 my $is_last = 1;
                 for (reverse 1..@files_list-1) {
