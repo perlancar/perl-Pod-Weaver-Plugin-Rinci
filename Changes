@@ -1,5 +1,13 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.53    2016-01-21 (PERLANCAR)
+
+	- Support multiple config filenames (Perinci::CmdLine::Lite 1.44+).
+
+	- More efforts to keep ordering correct (but now we also have
+	  PWR:SortVersions).
+
+
 0.52    2015-12-25 (PERLANCAR)
 
 	- [Bugfix] invoke module's import() first, so modules using
