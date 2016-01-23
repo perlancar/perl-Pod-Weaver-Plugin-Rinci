@@ -199,6 +199,7 @@ sub _list_config_params {
 sub _process_script {
     require Perinci::CmdLine::Dump;
     use experimental 'smartmatch';
+    no warnings 'once';
 
     my ($self, $document, $input) = @_;
 
@@ -648,12 +649,23 @@ sub _process_script {
                 "To disable searching for configuration files, pass C<--no-config>.\n\n",
 
                 "Configuration file is in the format of L<IOD>, which is basically INI with ",
-                "some extra features. ",
-                ($cli->{subcommands} ? "Section names map to subcommand names. ":""), "\n\n",
+                "some extra features.\n\n",
 
-                "You can put multiple profiles in a single file by using section names like C<[profile=SOMENAME]>",
+                ($cli->{subcommands} ? ("To put configuration for a certain subcommand only, use a section name like C<[subcommand=NAME]>.\n\n") : ()),
+
+                "You can put multiple profiles in a single file by using section names like C<[profile=SOMENAME]> (filter by profile)",
                 ($cli->{subcommands} ? " or C<[SUBCOMMAND_NAME profile=SOMENAME]>":""), ". ",
                 "Those sections will only be read if you specify the matching C<--config-profile SOMENAME>.", "\n\n",
+
+                "You can also put configuration for multiple programs inside a single file, and use filter C<program=NAME> in section names, e.g. C<[program=foo ...]>. ",
+                "The section will then only be used when the reading program matches.\n\n",
+
+                "Finally, you can filter a section by environment variable using the filter C<env=CONDITION> in section names. ",
+                "For example if you only want a section to be read if a certain environment variable is true: C<[env=SOMEVAR ...]>. ",
+                "If you only want a section to be read when the value of an environment variable has value equals something: C<[env=HOSTNAME=blink ...]>. ",
+                "If you only want a section to be read when the value of an environment variable does not equal something: C<[env=HOSTNAME!=blink ...]>. ",
+                "If you only want a section to be read when an environment variable contains something: C<[env=HOSTNAME*=server ...]>. ",
+                "Note that currently due to simplistic parsing, there must not be any whitespace in the value being compared because it marks the beginning of a new section filter or section name.\n\n",
 
                 "List of available configuration parameters:\n\n",
             );
