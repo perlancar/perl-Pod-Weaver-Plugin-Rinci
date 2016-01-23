@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.54    2016-01-23 (PERLANCAR)
+
+	- Update info on CONFIGURATION FILE to Perinci::CmdLine::Base 1.49
+	  (filtering by program, environment variable).
+
+
 0.53    2016-01-21 (PERLANCAR)
 
 	- Support multiple config filenames (Perinci::CmdLine::Lite 1.44+).
