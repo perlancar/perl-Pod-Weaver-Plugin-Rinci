@@ -391,10 +391,25 @@ sub _process_script {
         last unless $cli->{subcommands};
 
         my @content;
+        my %sc_spec_refs; # key=ref address, val=first subcommand name
         for my $sc_name (sort keys %clidocdata) {
             my $sc_spec = $cli->{subcommands}{$sc_name};
+
+            my $spec_same_as;
+            if (defined $sc_spec_refs{"$sc_spec"}) {
+                $spec_same_as = $sc_spec_refs{"$sc_spec"};
+            } else {
+                $sc_spec_refs{"$sc_spec"} = $sc_name;
+            }
+
             my $meta = $metas{$sc_name};
             push @content, "=head2 B<$sc_name>\n\n";
+
+            # assumed alias because spec has been seen before
+            if ($spec_same_as) {
+                push @content, "Alias for C<$spec_same_as>.\n\n";
+                next;
+            }
 
             my $summary = $sc_spec->{summary} // $meta->{summary};
             push @content, "$summary.\n\n" if $summary;
@@ -467,9 +482,19 @@ sub _process_script {
 
             # display each subcommand's options (without the options tagged as
             # 'common')
+            my %sc_spec_refs;
             for my $sc_name (@sc_names) {
                 my $sc_spec = $cli->{subcommands}{$sc_name};
+
+                my $spec_same_as;
+                if (defined $sc_spec_refs{"$sc_spec"}) {
+                    $spec_same_as = $sc_spec_refs{"$sc_spec"};
+                } else {
+                    $sc_spec_refs{"$sc_spec"} = $sc_name;
+                }
+                next if defined $spec_same_as;
                 next if $sc_spec->{is_alias};
+
                 my $opts = $clidocdata{$sc_name}{opts};
                 my @opts = sort {
                     (my $a_without_dash = $a) =~ s/^-+//;
