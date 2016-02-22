@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.55    2016-02-22 (PERLANCAR)
+
+	- If we encounter a subcommand where its spec has been seen before
+	  (by seeing its ref address), we assume that the subcommand is an
+	  alias.
+
+
 0.54    2016-01-23 (PERLANCAR)
 
 	- Update info on CONFIGURATION FILE to Perinci::CmdLine::Base 1.49
