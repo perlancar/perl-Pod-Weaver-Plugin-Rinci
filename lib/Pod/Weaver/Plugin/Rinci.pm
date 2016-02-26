@@ -18,11 +18,7 @@ use Perinci::Sub::To::CLIDocData qw(gen_cli_doc_data_from_meta);
 use Perinci::To::POD;
 use Scalar::Util qw(blessed);
 
-our $pa = Perinci::Access::Perl->new(
-    # we want to document the function's original properties (i.e. result_naked
-    # and args_as)
-    normalize_metadata => 0,
-);
+our $pa = Perinci::Access::Perl->new;
 
 # regex
 has exclude_modules => (
