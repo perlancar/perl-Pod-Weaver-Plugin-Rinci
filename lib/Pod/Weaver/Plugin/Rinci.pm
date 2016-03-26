@@ -55,7 +55,7 @@ sub _process_module {
     my $exports = {};
     {
         no strict 'refs';
-        $package->import;
+        #$package->import;
         my $uses_exporter_mod = @{"$package\::EXPORT"} || @{"$package\::EXPORT_OK"};
         for my $funcname (keys %$cmetas) {
             next unless $funcname =~ /\A\w+\z/;
