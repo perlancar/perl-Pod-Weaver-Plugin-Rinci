@@ -17,6 +17,7 @@ use Perinci::Access::Perl;
 use Perinci::Sub::To::CLIDocData qw(gen_cli_doc_data_from_meta);
 use Perinci::To::POD;
 use Scalar::Util qw(blessed);
+use Sub::Identify qw(sub_fullname);
 
 our $pa = Perinci::Access::Perl->new;
 
@@ -55,7 +56,14 @@ sub _process_module {
     my $exports = {};
     {
         no strict 'refs';
-        #$package->import;
+
+        # we import specifically when module is using Exporter::Rinci as its
+        # exporter, because Exporter::Rinci works by filling @EXPORT* variables
+        # during import().
+        if (sub_fullname(\&{"$package\::import"}) =~ /^Exporter::Rinci::/) {
+            $package->import;
+        }
+
         my $uses_exporter_mod = @{"$package\::EXPORT"} || @{"$package\::EXPORT_OK"};
         for my $funcname (keys %$cmetas) {
             next unless $funcname =~ /\A\w+\z/;
