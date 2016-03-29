@@ -60,7 +60,7 @@ sub _process_module {
         # we import specifically when module is using Exporter::Rinci as its
         # exporter, because Exporter::Rinci works by filling @EXPORT* variables
         # during import().
-        if (sub_fullname(\&{"$package\::import"}) =~ /^Exporter::Rinci::/) {
+        if (sub_fullname($package->can("import")) =~ /^Exporter::Rinci::/) {
             $package->import;
         }
 
