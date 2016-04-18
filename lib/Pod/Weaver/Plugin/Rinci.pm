@@ -745,6 +745,40 @@ sub _process_script {
         $modified++;
     }
 
+    # insert SEE ALSO section
+    {
+        my @content;
+
+        my %seen_urls;
+        for my $sc_name (sort keys %clidocdata) {
+            my $meta = $metas{$sc_name};
+            next unless $meta->{links};
+            for my $link0 (@{ $meta->{links} }) {
+                my $link = ref($link0) ? $link0 : {url=>$link0};
+                my $url = $link->{url};
+                next if $seen_urls{$url}++;
+                if ($url =~ s/^pm://) {
+                    push @content, "L<$url>";
+                } else {
+                    push @content, "L<$url>";
+                }
+                push @content, ", $link->{summary}" if $link->{summary};
+                push @content, ". " .
+                    Markdown::To::POD::markdown_to_pod($link->{description})
+                      if $link->{description};
+                push @content, "\n\n";
+            }
+        }
+
+        last unless @content;
+
+        $self->add_text_to_section(
+            $document, join('', @content), 'SEE ALSO',
+            {
+            });
+        $modified++;
+    }
+
     if ($modified) {
         $self->log(["added POD sections from Rinci metadata for script '%s'", $filename]);
     }
