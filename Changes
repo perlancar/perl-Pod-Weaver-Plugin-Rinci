@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.59    2016-04-18 (PERLANCAR)
+
+	- Render links in functions' metadata into script's See Also POD
+	  section.
+
+
 0.58    2016-03-29 (PERLANCAR)
 
 	- [Bugfix] Fix detecting whether a module's import() uses
