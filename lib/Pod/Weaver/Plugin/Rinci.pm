@@ -762,7 +762,7 @@ sub _process_script {
                 } else {
                     push @content, "L<$url>";
                 }
-                push @content, ", $link->{summary}" if $link->{summary};
+                push @content, ". $link->{summary}" if $link->{summary};
                 push @content, ". " .
                     Markdown::To::POD::markdown_to_pod($link->{description})
                       if $link->{description};
