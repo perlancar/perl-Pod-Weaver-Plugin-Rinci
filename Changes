@@ -1,5 +1,10 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.60    2016-07-22 (PERLANCAR)
+
+	- Handle (skip) non-OnDisk files.
+
+
 0.59    2016-04-18 (PERLANCAR)
 
 	- Render links in functions' metadata into script's See Also POD
