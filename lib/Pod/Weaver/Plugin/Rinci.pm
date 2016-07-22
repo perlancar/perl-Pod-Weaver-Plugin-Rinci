@@ -35,14 +35,18 @@ sub _process_module {
     my ($self, $document, $input) = @_;
 
     my $filename = $input->{filename};
+    my ($file) = grep { $_->name eq $filename } @{ $input->{zilla}->files };
+
+    unless ($file->isa("Dist::Zilla::File::OnDisk")) {
+        $self->log_debug(["skipping %s: not an ondisk file, currently only ondisk files are processed", $filename]);
+        return;
+    }
 
     # guess package from filename
     $filename =~ m!^lib/(.+)\.pm$!;
     my $package = $1;
     $package =~ s!/!::!g;
 
-    # XXX handle dynamically generated module (if there is such thing in the
-    # future)
     local @INC = ("lib", @INC);
 
     my $url = $package; $url =~ s!::!/!g; $url = "pl:/$url/";
