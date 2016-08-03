@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.61    2016-08-03 (PERLANCAR)
+
+	- Update the content of the CONFIGURATION FILE section for
+	  Perinci::CmdLine::Base 1.57 (where config_filenames might be an
+	  array of hash).
+
+
 0.60    2016-07-22 (PERLANCAR)
 
 	- Handle (skip) non-OnDisk files.
