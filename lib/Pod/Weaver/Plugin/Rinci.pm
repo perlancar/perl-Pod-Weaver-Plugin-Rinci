@@ -625,25 +625,33 @@ sub _process_script {
         my $config_filenames = [];
         my $config_dirs;
         my @files;
+        my @sections;
 
         # FILES section
         {
             my @content;
-            if ($cli->config_filename) {
-                push @$config_filenames,
-                    ref($cli->config_filename) eq 'ARRAY' ?
-                    @{ $cli->config_filename } : $cli->config_filename;
+            if (my $cfns = $cli->config_filename) {
+                for my $cfn (ref($cfns) eq 'ARRAY' ? @$cfns : $cfns) {
+                    if (ref($cfn) eq 'HASH') {
+                        push @$config_filenames, $cfn;
+                    } else {
+                        push @$config_filenames, {filename=>$cfn};
+                    }
+                }
             } elsif ($cli->program_name) {
-                push @$config_filenames, $cli->program_name . ".conf";
+                push @$config_filenames,
+                    {filename => $cli->program_name . ".conf"};
             } else {
-                push @$config_filenames, $prog . ".conf";
+                push @$config_filenames,
+                    {filename => $prog . ".conf"};
             }
             $config_dirs = $cli->{config_dirs} // ['~/.config', '~', '/etc'];
 
             for my $config_dir (@$config_dirs) {
-                for my $config_filename (@$config_filenames) {
-                    my $p = "$config_dir/$config_filename";
+                for my $cfn (@$config_filenames) {
+                    my $p = "$config_dir/$cfn->{filename}";
                     push @files, $p;
+                    push @sections, $cfn->{section};
                     push @content, "$p\n\n";
                 }
             }
@@ -663,41 +671,39 @@ sub _process_script {
         {
             my @content;
 
-            my @files_list = @files;
-            if (@files_list > 2) {
-                my $is_last = 1;
-                for (reverse 1..@files_list-1) {
-                    splice @files_list, $_, 0, ($is_last ? " or " : ", ");
-                    $is_last = 0;
-                }
-            } elsif (@files_list > 2) {
-                splice @files_list, 1, 0, " or ";
-            }
-
             push @content, (
-                "This script can read configuration file, which by default is ",
-                "searched at ", @files_list, " (can be changed by specifying C<--config-path>). ",
+                "This script can read configuration files. Configuration files are in the format of L<IOD>, which is basically INI with some extra features.\n\n",
+
+                "By default, these names are searched for configuration filenames (can be changed using C<--config-path>): ",
+                (map {(
+                    # add those pesky comma's/'or's (for two items: A or B, for
+                    # >2 items: A, B, or C)
+                    (@files == 2 && $_ == 1 ? " or" : ""),
+                    (@files >  2 && $_ == $#files ? ", or" : ""),
+                    (@files >  2 && $_ >  0 && $_ < $#files ? "," : ""),
+                    ($_ > 0 ? " " : ""),
+                    "F<$files[$_]>",
+                    (defined($sections[$_]) ? " (under the section C<$sections[$_]>)" : ""),
+                )} 0..$#files), ".\n\n",
+
                 "All found files will be read and merged.", "\n\n",
 
                 "To disable searching for configuration files, pass C<--no-config>.\n\n",
 
-                "Configuration file is in the format of L<IOD>, which is basically INI with ",
-                "some extra features.\n\n",
+                ($cli->{subcommands} ? ("To put configuration for a certain subcommand only, use a section name like C<[subcommand=NAME]> or C<[SOMESECTION subcommand=NAME]>.\n\n") : ()),
 
-                ($cli->{subcommands} ? ("To put configuration for a certain subcommand only, use a section name like C<[subcommand=NAME]>.\n\n") : ()),
-
-                "You can put multiple profiles in a single file by using section names like C<[profile=SOMENAME]> (filter by profile)",
-                ($cli->{subcommands} ? " or C<[SUBCOMMAND_NAME profile=SOMENAME]>":""), ". ",
+                "You can put multiple profiles in a single file by using section names like C<[profile=SOMENAME]> or C<[SOMESECTION profile=SOMENAME]>",
+                ($cli->{subcommands} ? " or C<[subcommand=SUBCOMMAND_NAME profile=SOMENAME]> or C<[SOMESECTION subcommand=SUBCOMMAND_NAME profile=SOMENAME]>":""), ". ",
                 "Those sections will only be read if you specify the matching C<--config-profile SOMENAME>.", "\n\n",
 
-                "You can also put configuration for multiple programs inside a single file, and use filter C<program=NAME> in section names, e.g. C<[program=foo ...]>. ",
+                "You can also put configuration for multiple programs inside a single file, and use filter C<program=NAME> in section names, e.g. C<[program=NAME ...]> or C<[SOMESECTION program=NAME]>. ",
                 "The section will then only be used when the reading program matches.\n\n",
 
                 "Finally, you can filter a section by environment variable using the filter C<env=CONDITION> in section names. ",
-                "For example if you only want a section to be read if a certain environment variable is true: C<[env=SOMEVAR ...]>. ",
-                "If you only want a section to be read when the value of an environment variable has value equals something: C<[env=HOSTNAME=blink ...]>. ",
-                "If you only want a section to be read when the value of an environment variable does not equal something: C<[env=HOSTNAME!=blink ...]>. ",
-                "If you only want a section to be read when an environment variable contains something: C<[env=HOSTNAME*=server ...]>. ",
+                "For example if you only want a section to be read if a certain environment variable is true: C<[env=SOMEVAR ...]> or C<[SOMESECTION env=SOMEVAR ...]>. ",
+                "If you only want a section to be read when the value of an environment variable has value equals something: C<[env=HOSTNAME=blink ...]> or C<[SOMESECTION env=HOSTNAME=blink ...]>. ",
+                "If you only want a section to be read when the value of an environment variable does not equal something: C<[env=HOSTNAME!=blink ...]> or C<[SOMESECTION env=HOSTNAME!=blink ...]>. ",
+                "If you only want a section to be read when an environment variable contains something: C<[env=HOSTNAME*=server ...]> or C<[SOMESECTION env=HOSTNAME*=server ...]>. ",
                 "Note that currently due to simplistic parsing, there must not be any whitespace in the value being compared because it marks the beginning of a new section filter or section name.\n\n",
 
                 "List of available configuration parameters:\n\n",
