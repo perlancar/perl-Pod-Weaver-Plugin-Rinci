@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.62    2016-08-04 (PERLANCAR)
+
+	- [Bugfix] Don't list configuration for argument when argument is
+	  tagged 'hidden'.
+
+
 0.61    2016-08-03 (PERLANCAR)
 
 	- Update the content of the CONFIGURATION FILE section for
