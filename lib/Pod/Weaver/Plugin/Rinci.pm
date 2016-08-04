@@ -194,6 +194,7 @@ sub _list_config_params {
         my $ospec = $opts->{$_};
         next unless $ospec->{arg};
         next if $ospec->{main_opt};
+        next if grep {$_ eq 'hidden'} @{ $ospec->{arg_spec}{tags} // [] };
         next if $filter && !$filter->($ospec);
         my $oname = $ospec->{opt_parsed}{opts}[0];
         $oname = length($oname) > 1 ? "--$oname" : "-$oname";
