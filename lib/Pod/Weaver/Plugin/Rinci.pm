@@ -794,13 +794,16 @@ sub _process_script {
                 my $link = ref($link0) ? $link0 : {url=>$link0};
                 my $url = $link->{url};
                 next if $seen_urls{$url}++;
-                if ($url =~ s/^pm://) {
-                    push @content, "L<$url>";
+                if ($url =~ s!^(pm|prog):(//?)?!!) {
+                    push @content, "L<$url>.";
                 } else {
-                    push @content, "L<$url>";
+                    push @content, "L<$url>.";
                 }
-                push @content, ". $link->{summary}" if $link->{summary};
-                push @content, ". " .
+                if ($link->{summary}) {
+                    push @content, " $link->{summary}";
+                    push @content, "." unless $link->{summary} =~ /\.$/;
+                }
+                push @content, " " .
                     Markdown::To::POD::markdown_to_pod($link->{description})
                       if $link->{description};
                 push @content, "\n\n";
