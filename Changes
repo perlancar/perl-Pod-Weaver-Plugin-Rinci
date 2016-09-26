@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.63    2016-09-26 (PERLANCAR)
+
+	- Show the output/result of example with src_plang=bash (by
+	  executing the CLI script and capturing its output).
+
+
 0.62    2016-08-04 (PERLANCAR)
 
 	- [Bugfix] Don't list configuration for argument when argument is
