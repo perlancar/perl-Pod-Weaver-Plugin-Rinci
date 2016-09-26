@@ -12,10 +12,12 @@ with 'Pod::Weaver::Role::DumpPerinciCmdLineScript';
 use Data::Dmp qw(dmp);
 use Encode qw(decode encode);
 use File::Temp qw(tempfile);
+use IPC::System::Options;
 use Markdown::To::POD;
 use Perinci::Access::Perl;
 use Perinci::Sub::To::CLIDocData qw(gen_cli_doc_data_from_meta);
 use Perinci::To::POD;
+use PERLANCAR::ShellQuote::Any;
 use Scalar::Util qw(blessed);
 use Sub::Identify qw(sub_fullname);
 
@@ -324,29 +326,53 @@ sub _process_script {
 
               SHOW_RESULT:
                 {
-                    my $res;
+                    my $fres;
                     last unless $eg->{example_spec}{'x.doc.show_result'} // 1;
-                    if (exists $eg->{result}) {
-                        $res = $eg->{result};
-                    } else {
-                        my %extra;
-                        if ($eg->{example_spec}{argv}) {
-                            $extra{argv} = $eg->{example_spec}{argv};
-                        } elsif ($eg->{example_spec}{args}) {
-                            $extra{args} = $eg->{example_spec}{args};
+
+                    if ($eg->{example_spec}{src}) {
+                        if ($eg->{example_spec}{src_plang} =~ /\A(bash)\z/) {
+                            # write script to filesystem to a temporary file,
+                            # execute it and get its output
+                            my ($file) = grep { $_->name eq $input->{filename} }
+                                @{ $input->{zilla}->files };
+                            my ($fh, $filename) = tempfile();
+                            print $fh $file->encoded_content;
+                            close $fh;
+                            my $cmdline = $eg->{cmdline};
+                            $cmdline =~ s/\[\[prog\]\]/shell_quote($^X, $filename)/e;
+                            IPC::System::Options::system(
+                                {shell => 0, capture_stdout => \$fres},
+                                "bash", "-c", $cmdline);
+                            $self->log_debug(["res: %s", $res]);
                         } else {
-                            $self->log_debug(["Example #%d (subcommand %s) doesn't provide args/argv, skipped showing result", $eg->{_i}, $eg->{_sc_name}]);
+                            $self->log_debug(["Example #%d (subcommand %s) has src with unsupported src_plang ($eg->{srg_plang}), skipped showing result", $eg->{_i}, $eg->{_sc_name}]);
                             last SHOW_RESULT;
                         }
-                        $res = $pa->request(call => $url, \%extra);
+                    } else {
+                        my $res;
+                        if (exists $eg->{result}) {
+                            $res = $eg->{result};
+                        } else {
+                            my %extra;
+                            if ($eg->{example_spec}{argv}) {
+                                $extra{argv} = $eg->{example_spec}{argv};
+                            } elsif ($eg->{example_spec}{args}) {
+                                $extra{args} = $eg->{example_spec}{args};
+                            } else {
+                                $self->log_debug(["Example #%d (subcommand %s) doesn't provide args/argv, skipped showing result", $eg->{_i}, $eg->{_sc_name}]);
+                                last SHOW_RESULT;
+                            }
+                            $res = $pa->request(call => $url, \%extra);
+                        }
                         my $format = $res->[3]{'cmdline.default_format'} // $cli->{default_format} // 'text-pretty';
                         require Perinci::Result::Format::Lite;
-                        my $fres = Perinci::Result::Format::Lite::format($res, $format);
-                        $fres =~ s/^/ /gm;
-                        push @content, $fres;
+                        $fres = Perinci::Result::Format::Lite::format($res, $format);
                     }
+
+                    $fres =~ s/^/ /gm;
+                    push @content, $fres;
+                    push @content, "\n";
                 }
-                push @content, "\n";
             }
         }
         last unless @content;
