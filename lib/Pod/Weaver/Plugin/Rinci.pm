@@ -250,7 +250,6 @@ sub _process_script {
             my $url = $sc_spec->{url};
             $urls{$sc_name} = $url;
             my $res = $pa->request(meta => $url);
-            use DD; dd \%INC;
             die "Can't meta $url (subcommand $sc_name): $res->[0] - $res->[1]"
                 unless $res->[0] == 200;
             my $meta = $res->[2];

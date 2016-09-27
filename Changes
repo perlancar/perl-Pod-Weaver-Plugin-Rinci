@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.64    2016-09-27 (PERLANCAR)
+
+        - Recognize pod: and prog: URL schemes in links and convert them to
+          proper L<...> POD links.
+
+
 0.63    2016-09-26 (PERLANCAR)
 
 	- Show the output/result of example with src_plang=bash (by
