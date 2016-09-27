@@ -250,6 +250,7 @@ sub _process_script {
             my $url = $sc_spec->{url};
             $urls{$sc_name} = $url;
             my $res = $pa->request(meta => $url);
+            use DD; dd \%INC;
             die "Can't meta $url (subcommand $sc_name): $res->[0] - $res->[1]"
                 unless $res->[0] == 200;
             my $meta = $res->[2];
@@ -794,7 +795,7 @@ sub _process_script {
                 my $link = ref($link0) ? $link0 : {url=>$link0};
                 my $url = $link->{url};
                 next if $seen_urls{$url}++;
-                if ($url =~ s!^(pm|prog):(//?)?!!) {
+                if ($url =~ s!^(pm|pod|prog):(//?)?!!) {
                     push @content, "L<$url>.";
                 } else {
                     push @content, "L<$url>.";
