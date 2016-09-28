@@ -339,7 +339,7 @@ sub _process_script {
                             print $fh $file->encoded_content;
                             close $fh;
                             my $cmdline = $eg->{cmdline};
-                            $cmdline =~ s/\[\[prog\]\]/shell_quote($^X, $filename)/e;
+                            $cmdline =~ s/\[\[prog\]\]/shell_quote($^X, "-Ilib", $filename)/e;
                             IPC::System::Options::system(
                                 {shell => 0, capture_stdout => \$fres},
                                 "bash", "-c", $cmdline);
