@@ -325,6 +325,7 @@ sub _process_script {
                 $cmdline =~ s/\[\[prog\]\]/$prog/;
                 push @content, " % $cmdline\n";
 
+                my $show_result;
               SHOW_RESULT:
                 {
                     my $fres;
@@ -383,6 +384,11 @@ sub _process_script {
 
                     $fres =~ s/^/ /gm;
                     push @content, $fres;
+                    push @content, "\n";
+                    $show_result = 1;
+                } # SHOW_RESULT
+
+                unless ($show_result) {
                     push @content, "\n";
                 }
             }
