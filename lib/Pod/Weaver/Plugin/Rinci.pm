@@ -18,6 +18,7 @@ use Perinci::Access::Perl;
 use Perinci::Sub::To::CLIDocData qw(gen_cli_doc_data_from_meta);
 use Perinci::To::POD;
 use PERLANCAR::ShellQuote::Any;
+use Proc::ChildError qw(explain_child_error);
 use Scalar::Util qw(blessed);
 use Sub::Identify qw(sub_fullname);
 
@@ -343,7 +344,18 @@ sub _process_script {
                             IPC::System::Options::system(
                                 {shell => 0, capture_stdout => \$fres},
                                 "bash", "-c", $cmdline);
-                            $self->log_debug(["res: %s", $res]);
+                            if ($?) {
+                                $self->log_fatal(["Example #%d (subcommand %s): cmdline %s: failed: %s", $eg->{_i}, $eg->{_sc_name}, $cmdline, explain_child_error()]);
+                            }
+                            if (my $max_lines = $eg->{example_spec}{'x.doc.max_result_lines'}) {
+                                my @lines = split /^/, $fres;
+                                if (@lines > $max_lines) {
+                                    my $n = int($max_lines/2);
+                                    splice @lines, $n, (@lines - $max_lines + 1), "...\n";
+                                    $fres = join("", @lines);
+                                }
+                            }
+                            $self->log_debug(["fres: %s", $fres]);
                         } else {
                             $self->log_debug(["Example #%d (subcommand %s) has src with unsupported src_plang ($eg->{srg_plang}), skipped showing result", $eg->{_i}, $eg->{_sc_name}]);
                             last SHOW_RESULT;
