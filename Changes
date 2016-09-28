@@ -1,5 +1,16 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.65    2016-09-28 (PERLANCAR)
+
+        - [Enhancement] Introduce x.doc.max_result_lines in example spec to
+          limit number of output lines shown.
+
+        - Bail when there is an error while running example script.
+
+        - [Bugfix] Add -Ilib when executing script when producing output for
+          examples with src_plang=bash so dev version of modules are used.
+
+
 0.64    2016-09-27 (PERLANCAR)
 
         - Recognize pod: and prog: URL schemes in links and convert them to
