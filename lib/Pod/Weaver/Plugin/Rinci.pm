@@ -363,8 +363,8 @@ sub _process_script {
                         }
                     } else {
                         my $res;
-                        if (exists $eg->{result}) {
-                            $res = $eg->{result};
+                        if (exists $eg->{example_spec}{result}) {
+                            $res = $eg->{example_spec}{result};
                         } else {
                             my %extra;
                             if ($eg->{example_spec}{argv}) {
