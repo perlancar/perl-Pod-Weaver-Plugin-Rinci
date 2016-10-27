@@ -1,5 +1,14 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.68    2016-10-27 (PERLANCAR)
+
+	- [dist] Bump prereq version Perinci::To::POD to 0.81 to grok
+	  'hidden' & 'hidden-mod' in argument spec tags.
+
+	- Remove code that hides arguments with 'hidden' tags because this
+	  is already done by Perinci::Sub::To::CLIDocData 0.28+.
+
+
 0.67    2016-10-07 (PERLANCAR)
 
 	- [Bugfix] Referred to the wrong variable so that example results
