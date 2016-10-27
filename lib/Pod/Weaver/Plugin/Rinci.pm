@@ -197,7 +197,6 @@ sub _list_config_params {
         my $ospec = $opts->{$_};
         next unless $ospec->{arg};
         next if $ospec->{main_opt};
-        next if grep {$_ eq 'hidden'} @{ $ospec->{arg_spec}{tags} // [] };
         next if $filter && !$filter->($ospec);
         my $oname = $ospec->{opt_parsed}{opts}[0];
         $oname = length($oname) > 1 ? "--$oname" : "-$oname";
@@ -527,7 +526,6 @@ sub _process_script {
                 push @content, "=head2 Common options\n\n";
                 push @content, "=over\n\n";
                 for (@opts) {
-                    next if 'hidden' ~~ @{ $opts->{$_}{tags} // [] };
                     push @content, _fmt_opt($_, $opts->{$_});
                 }
                 push @content, "=back\n\n";
@@ -558,7 +556,6 @@ sub _process_script {
                 push @content, "=head2 Options for subcommand $sc_name\n\n";
                 push @content, "=over\n\n";
                 for (@opts) {
-                    next if 'hidden' ~~ @{ $opts->{$_}{tags} // [] };
                     push @content, _fmt_opt($_, $opts->{$_});
                 }
                 push @content, "=back\n\n";
@@ -587,7 +584,6 @@ sub _process_script {
                 } @{ $options_by_cat{$cat} };
                 push @content, "=over\n\n";
                 for (@opts) {
-                    next if 'hidden' ~~ @{ $opts->{$_}{tags} // [] };
                     push @content, _fmt_opt($_, $opts->{$_});
                 }
                 push @content, "=back\n\n";
