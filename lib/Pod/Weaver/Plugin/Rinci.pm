@@ -296,6 +296,7 @@ sub _process_script {
         push @content, "Usage:\n\n";
         if ($cli->{subcommands}) {
             for my $sc_name (sort keys %clidocdata) {
+                next unless length $sc_name;
                 my $usage = $clidocdata{$sc_name}->{usage_line};
                 $usage =~ s/\[\[prog\]\]/$prog $sc_name/;
                 push @content, " % $usage\n";
@@ -309,6 +310,7 @@ sub _process_script {
 
         my @examples;
         for my $sc_name (sort keys %clidocdata) {
+            next unless length $sc_name;
             my $i = 1;
             for my $eg (@{ $clidocdata{$sc_name}{examples} }) {
                 # add pointer to subcommand, we need it later to show result
@@ -448,6 +450,7 @@ sub _process_script {
         my @content;
         my %sc_spec_refs; # key=ref address, val=first subcommand name
         for my $sc_name (sort keys %clidocdata) {
+            next unless length $sc_name;
             my $sc_spec = $cli->{subcommands}{$sc_name};
 
             my $spec_same_as;
@@ -496,7 +499,7 @@ sub _process_script {
         $modified++;
     }
 
-    my @sc_names = sort keys %clidocdata;
+    my @sc_names = grep { length } sort keys %clidocdata;
 
     # insert OPTIONS section
     {
