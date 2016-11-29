@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.70    2016-11-29 (PERLANCAR)
+
+	- Also don't skip adding See Also (links) items from main URL's
+	  Rinci metadata, when CLI has subcommands.
+
+
 0.69    2016-11-29 (PERLANCAR)
 
 	- Don't skip adding Description from main URL's Rinci metadata,
