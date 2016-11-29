@@ -249,6 +249,17 @@ sub _process_script {
         my $meta = $res->[2];
         $metas{''} = $meta;
 
+        $res = gen_cli_doc_data_from_meta(
+            meta => $meta,
+            meta_is_normalized => 0, # because riap client is specifically set not to normalize
+            common_opts => $cli->{common_opts},
+            per_arg_json => $cli->{per_arg_json},
+            per_arg_yaml => $cli->{per_arg_yaml},
+        );
+        die "Can't gen_cli_doc_data_from_meta: $res->[0] - $res->[1]"
+            unless $res->[0] == 200;
+        $clidocdata{''} = $res->[2];
+
         if ($cli->{subcommands}) {
             if (ref($cli->{subcommands}) eq 'CODE') {
                 die "Script '$filename': sorry, coderef 'subcommands' not ".
@@ -274,17 +285,6 @@ sub _process_script {
                     unless $res->[0] == 200;
                 $clidocdata{$sc_name} = $res->[2];
             }
-        } else {
-            $res = gen_cli_doc_data_from_meta(
-                meta => $meta,
-                meta_is_normalized => 0, # because riap client is specifically set not to normalize
-                common_opts => $cli->{common_opts},
-                per_arg_json => $cli->{per_arg_json},
-                per_arg_yaml => $cli->{per_arg_yaml},
-            );
-            die "Can't gen_cli_doc_data_from_meta: $res->[0] - $res->[1]"
-                unless $res->[0] == 200;
-            $clidocdata{''} = $res->[2];
         }
     }
 
