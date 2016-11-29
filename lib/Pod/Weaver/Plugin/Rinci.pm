@@ -240,20 +240,41 @@ sub _process_script {
     my %metas; # key = subcommand name
     my %clidocdata; # key = subcommand name
     my %urls; # key = subcommand name
-    if ($cli->{subcommands}) {
-        if (ref($cli->{subcommands}) eq 'CODE') {
-            die "Script '$filename': sorry, coderef 'subcommands' not ".
-                "supported";
-        }
-        for my $sc_name (keys %{ $cli->{subcommands} }) {
-            my $sc_spec = $cli->{subcommands}{$sc_name};
-            my $url = $sc_spec->{url};
-            $urls{$sc_name} = $url;
-            my $res = $pa->request(meta => $url);
-            die "Can't meta $url (subcommand $sc_name): $res->[0] - $res->[1]"
-                unless $res->[0] == 200;
-            my $meta = $res->[2];
-            $metas{$sc_name} = $meta;
+
+    {
+        my $url = $cli->{url};
+        $urls{''} = $url;
+        my $res = $pa->request(meta => $url);
+        die "Can't meta $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
+        my $meta = $res->[2];
+        $metas{''} = $meta;
+
+        if ($cli->{subcommands}) {
+            if (ref($cli->{subcommands}) eq 'CODE') {
+                die "Script '$filename': sorry, coderef 'subcommands' not ".
+                    "supported";
+            }
+            for my $sc_name (keys %{ $cli->{subcommands} }) {
+                my $sc_spec = $cli->{subcommands}{$sc_name};
+                my $url = $sc_spec->{url};
+                $urls{$sc_name} = $url;
+                my $res = $pa->request(meta => $url);
+                die "Can't meta $url (subcommand $sc_name): $res->[0] - $res->[1]"
+                    unless $res->[0] == 200;
+                my $meta = $res->[2];
+                $metas{$sc_name} = $meta;
+                $res = gen_cli_doc_data_from_meta(
+                    meta => $meta,
+                    meta_is_normalized => 0, # because riap client is specifically set not to normalize
+                    common_opts => $cli->{common_opts},
+                    per_arg_json => $cli->{per_arg_json},
+                    per_arg_yaml => $cli->{per_arg_yaml},
+                );
+                die "Can't gen_cli_doc_data_from_meta (subcommand $sc_name): $res->[0] - $res->[1]"
+                    unless $res->[0] == 200;
+                $clidocdata{$sc_name} = $res->[2];
+            }
+        } else {
             $res = gen_cli_doc_data_from_meta(
                 meta => $meta,
                 meta_is_normalized => 0, # because riap client is specifically set not to normalize
@@ -261,27 +282,10 @@ sub _process_script {
                 per_arg_json => $cli->{per_arg_json},
                 per_arg_yaml => $cli->{per_arg_yaml},
             );
-            die "Can't gen_cli_doc_data_from_meta (subcommand $sc_name): $res->[0] - $res->[1]"
+            die "Can't gen_cli_doc_data_from_meta: $res->[0] - $res->[1]"
                 unless $res->[0] == 200;
-            $clidocdata{$sc_name} = $res->[2];
+            $clidocdata{''} = $res->[2];
         }
-    } else {
-        my $url = $cli->{url};
-        $urls{''} = $url;
-        my $res = $pa->request(meta => $url);
-        die "Can't meta $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
-        my $meta = $res->[2];
-        $metas{''} = $meta;
-        $res = gen_cli_doc_data_from_meta(
-            meta => $meta,
-            meta_is_normalized => 0, # because riap client is specifically set not to normalize
-            common_opts => $cli->{common_opts},
-            per_arg_json => $cli->{per_arg_json},
-            per_arg_yaml => $cli->{per_arg_yaml},
-        );
-        die "Can't gen_cli_doc_data_from_meta: $res->[0] - $res->[1]"
-            unless $res->[0] == 200;
-        $clidocdata{''} = $res->[2];
     }
 
     my $modified;
@@ -413,7 +417,6 @@ sub _process_script {
 
     # insert DESCRIPTION section
     {
-        last if $cli->{subcommands};
         last unless $metas{''}{description};
 
         my @content;
