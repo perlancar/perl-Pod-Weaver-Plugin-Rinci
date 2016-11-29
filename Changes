@@ -1,5 +1,11 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.69    2016-11-29 (PERLANCAR)
+
+	- Don't skip adding Description from main URL's Rinci metadata,
+	  when CLI has subcommands.
+
+
 0.68    2016-10-27 (PERLANCAR)
 
 	- [dist] Bump prereq version Perinci::To::POD to 0.81 to grok
