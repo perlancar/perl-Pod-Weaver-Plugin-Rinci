@@ -1,5 +1,12 @@
 Revision history for Pod-Weaver-Plugin-Perinci
 
+0.72    2016-12-10 (PERLANCAR)
+
+	- Add note about hash argument (--name=s%) being specified using
+	  key=value syntax and can be specified multiple times too like
+	  array (@).
+
+
 0.71    2016-11-29 (PERLANCAR)
 
         - [Bugfix][regression] Subcommand with name '' was included in the
