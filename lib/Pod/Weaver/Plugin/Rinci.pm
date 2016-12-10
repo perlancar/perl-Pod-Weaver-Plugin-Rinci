@@ -175,6 +175,8 @@ sub _fmt_opt {
 
     if (($ospec->{orig_opt} // '') =~ /\@/) {
         push @res, "Can be specified multiple times.\n\n";
+    } elsif (($ospec->{orig_opt} // '') =~ /\%/) {
+        push @res, "Each value is a name-value pair, use I<key=value> syntax. Can be specified multiple times.\n\n";
     }
 
     join "", @res;
