@@ -1,5 +1,3 @@
-Revision history for Pod-Weaver-Plugin-Perinci
-
 0.72    2016-12-10 (PERLANCAR)
 
 	- Add note about hash argument (--name=s%) being specified using
