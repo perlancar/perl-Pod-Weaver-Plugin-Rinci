@@ -1,3 +1,10 @@
+0.73    2017-01-11 (PERLANCAR)
+
+	- [refactor] Extract functionality of generating POD from
+          Perinci::CmdLine-based scripts to Perinci::CmdLine::POD, so it's
+          reusable e.g. by Perinci::CmdLine::Inline.
+
+
 0.72    2016-12-10 (PERLANCAR)
 
 	- Add note about hash argument (--name=s%) being specified using
