@@ -127,6 +127,7 @@ sub _process_module {
 sub _process_script {
     require File::Temp;
     require Perinci::CmdLine::POD;
+    require Perinci::CmdLine::Util;
     #require Require::Hook::DzilBuild; # script is dumped in a different process, so doesn't work here
 
     my ($self, $document, $input) = @_;
@@ -143,19 +144,34 @@ sub _process_script {
         $filename = $tempname;
     }
 
+    my $det_res = Perinci::CmdLine::Util::detect_pericmd_script(
+        filename => $filename,
+    );
+    if ($det_res->[0] == 412) {
+        $self->log_debug(["skipped file '%s' (%s)", $filename, $det_res->[1]]);
+        return;
+    } elsif (!$det_res->[2]) {
+        $self->log_debug(["skipped file '%s' (not detected as Perinci::CmdLine script)", $filename]);
+        return;
+    }
+
     # so scripts can know that they are being dumped in the context of
     # Dist::Zilla
     local $ENV{DZIL} = 1;
 
+    my $pod_completion = 1;
+    if ($det_res->[3]{'func.is_inline'}) {
+        (my $comp_filename = $filename) =~ s!(.+)/(.+)!$1/_$2!;
+        my $has_completer = grep { $_->name eq $comp_filename }
+            @{ $input->{zilla}->files };
+        $pod_completion = 0 unless $has_completer;
+    }
     my $res = Perinci::CmdLine::POD::gen_pod_for_pericmd_script(
         script => $filename,
-        );
-    if ($res->[0] == 412) {
-        $self->log_debug(["skipped file '%s' (%s)", $filename, $res->[1]]);
-        return;
-    } elsif ($res->[0] != 200) {
-        die "Can't generate POD for script: $res->[0] - $res->[1]";
-    }
+        pod_completion => $pod_completion,
+    );
+    die "Can't generate POD for script: $res->[0] - $res->[1]"
+        unless $res->[0] == 200;
 
     my $modified;
     for my $s (@{ $res->[3]{'func.sections'} }) {
