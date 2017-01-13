@@ -144,6 +144,8 @@ sub _process_script {
         $filename = $tempname;
     }
 
+    (my $command_name = $input->{filename}) =~ s!.+/!!;
+
     my $det_res = Perinci::CmdLine::Util::detect_pericmd_script(
         filename => $filename,
     );
@@ -159,16 +161,21 @@ sub _process_script {
     # Dist::Zilla
     local $ENV{DZIL} = 1;
 
-    my $pod_completion = 1;
+    my $completer_name = $command_name;
     if ($det_res->[3]{'func.is_inline'}) {
-        (my $comp_filename = $filename) =~ s!(.+)/(.+)!$1/_$2!;
+        (my $comp_filename = $input->{filename}) =~ s!(.+)/(.+)!$1/_$2!;
         my $has_completer = grep { $_->name eq $comp_filename }
             @{ $input->{zilla}->files };
-        $pod_completion = 0 unless $has_completer;
+        if ($has_completer) {
+            $completer_name = "_$command_name";
+        } else {
+            $completer_name = undef;
+        }
     }
     my $res = Perinci::CmdLine::POD::gen_pod_for_pericmd_script(
         script => $filename,
-        pod_completion => $pod_completion,
+        program_name => $command_name,
+        (completer_script => $completer_name) x !!defined($completer_name),
     );
     die "Can't generate POD for script: $res->[0] - $res->[1]"
         unless $res->[0] == 200;
