@@ -1,3 +1,9 @@
+0.74    2017-01-13 (PERLANCAR)
+
+	- [Bugfix] Set CLI script name, generate COMPLETION section (when
+	  script indeed has completer).
+
+
 0.73    2017-01-11 (PERLANCAR)
 
 	- [refactor] Extract functionality of generating POD from
