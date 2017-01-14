@@ -183,12 +183,11 @@ sub _process_script {
     my $modified;
     for my $s (@{ $res->[3]{'func.sections'} }) {
         next unless $s->{content};
-        $self->add_text_to_section(
+        $modified++ if $self->add_text_to_section(
             $document, $s->{content}, $s->{name},
             {
                 (ignore => $s->{ignore}) x !!$s->{ignore},
             });
-        $modified++;
     }
 
     if ($modified) {
