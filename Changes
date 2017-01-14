@@ -1,3 +1,12 @@
+0.75    2017-01-14 (PERLANCAR)
+
+	- [Bugfix] Fix log message which logged the temporary script name
+	  instead of original one.
+
+	- [Bugfix] Only set script is modified when POD text has actually
+	  been added.
+
+
 0.74    2017-01-13 (PERLANCAR)
 
 	- [Bugfix] Set CLI script name, generate COMPLETION section (when
