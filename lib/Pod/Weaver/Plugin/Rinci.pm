@@ -191,7 +191,7 @@ sub _process_script {
     }
 
     if ($modified) {
-        $self->log(["added POD sections from Rinci metadata for script '%s'", $filename]);
+        $self->log(["added POD sections from Rinci metadata for script '%s'", $input->{filename}]);
     }
 }
 
