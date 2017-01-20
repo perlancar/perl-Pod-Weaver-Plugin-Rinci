@@ -25,7 +25,7 @@ has exclude_files => (
 );
 
 sub _process_module {
-    require Require::Hook::DzilBuild;
+    #require Require::Hook::DzilBuild;
 
     my ($self, $document, $input) = @_;
 
@@ -42,7 +42,9 @@ sub _process_module {
     my $package = $1;
     $package =~ s!/!::!g;
 
-    local @INC = (Require::Hook::DzilBuild->new(zilla => $input->{zilla}), @INC);
+    # can't work for now, Perinci::Access client searches in filesystem
+    #local @INC = (Require::Hook::DzilBuild->new(zilla => $input->{zilla}, debug=>1), @INC);
+    local @INC = ("lib", @INC);
 
     my $url = $package; $url =~ s!::!/!g; $url = "pl:/$url/";
     my $res = $pa->request(meta => $url);
@@ -120,7 +122,7 @@ sub _process_module {
         $self->add_text_to_section($document, $sectcontent, $sectname, \%opts);
     }
     if ($found) {
-        $self->log(["added POD sections from Rinci metadata for module '%s'", $filename]);
+        $self->log(["added POD sections from Rinci metadata for file (module) '%s'", $filename]);
     }
 }
 
