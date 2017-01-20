@@ -1,3 +1,10 @@
+0.76    2017-01-20 (PERLANCAR)
+
+        - [internal] Revert from using Require::Hook::DzilBuild to using 'local
+          @INC = ("lib", @INC)' because Riap client searches for pl: URL path
+          existence using filesystem anyway.
+
+
 0.75    2017-01-14 (PERLANCAR)
 
 	- [Bugfix] Fix log message which logged the temporary script name
@@ -18,6 +25,9 @@
 	- [refactor] Extract functionality of generating POD from
           Perinci::CmdLine-based scripts to Perinci::CmdLine::POD, so it's
           reusable e.g. by Perinci::CmdLine::Inline.
+
+        - Uses Require::Hook::DzilBuild. UPDATE 2017-01-20: revert to using
+          'local @INC = ("lib", @INC)'.
 
 
 0.72    2016-12-10 (PERLANCAR)
