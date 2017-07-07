@@ -177,6 +177,7 @@ sub _process_script {
     my $res = Perinci::CmdLine::POD::gen_pod_for_pericmd_script(
         script => $filename,
         program_name => $command_name,
+        libs => ["lib"],
         (completer_script => $completer_name) x !!defined($completer_name),
     );
     die "Can't generate POD for script: $res->[0] - $res->[1]"
