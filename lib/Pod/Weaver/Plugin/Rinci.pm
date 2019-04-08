@@ -103,12 +103,15 @@ sub _process_module {
         # skip inserting FUNCTIONS if there are no functions
         next if $sectname eq 'FUNCTIONS' && $sectcontent !~ /^=head2/m;
 
+        # skip inserting METHODS if there are no functions
+        next if $sectname eq 'METHODS' && $sectcontent !~ /^=head2/m;
+
         $found++;
         #$self->log(["generated POD section %s", $1]);
 
         my %opts;
         # position
-        if ($sectname eq 'FUNCTIONS') {
+        if ($sectname eq 'FUNCTIONS' || $sectname eq 'METHODS') {
             $opts{after_section} = [
                 'DESCRIPTION',
             ];
@@ -261,10 +264,10 @@ For modules, the following are inserted:
 
 From C<description> property from package metadata, if any.
 
-=item * FUNCTIONS
+=item * FUNCTIONS (or METHODS)
 
-Documentation for each function for which the metadata is found under the
-package will be added here. For each function, there will be summary,
+Documentation for each function (or method) for which the metadata is found
+under the package will be added here. For each function, there will be summary,
 description, usage, list of arguments and their documentation, as well as
 examples, according to what's available in the function metadata of
 corresponding function.
