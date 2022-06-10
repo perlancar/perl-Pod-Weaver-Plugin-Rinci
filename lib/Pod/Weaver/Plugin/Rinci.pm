@@ -25,26 +25,23 @@ has exclude_files => (
 );
 
 sub _process_module {
-    #require Require::Hook::DzilBuild;
+    require Require::Hook::DzilBuild;
 
     my ($self, $document, $input) = @_;
 
     my $filename = $input->{filename};
     my ($file) = grep { $_->name eq $filename } @{ $input->{zilla}->files };
 
-    unless ($file->isa("Dist::Zilla::File::OnDisk")) {
-        $self->log_debug(["skipping %s: not an ondisk file, currently only ondisk files are processed", $filename]);
-        return;
-    }
-
     # guess package from filename
     $filename =~ m!^lib/(.+)\.pm$!;
     my $package = $1;
     $package =~ s!/!::!g;
 
-    # can't work for now, Perinci::Access client searches in filesystem
-    #local @INC = (Require::Hook::DzilBuild->new(zilla => $input->{zilla}, debug=>1), @INC);
-    local @INC = ("lib", @INC);
+    local @INC = (Require::Hook::DzilBuild->new(zilla => $input->{zilla}, debug=>1), @INC);
+
+    # force reload to get the recent version of module
+    (my $package_pm = "$package.pm") =~ s!::!/!g;
+    delete $INC{$package_pm};
 
     my $url = $package; $url =~ s!::!/!g; $url = "pl:/$url/";
     my $res = $pa->request(meta => $url);
