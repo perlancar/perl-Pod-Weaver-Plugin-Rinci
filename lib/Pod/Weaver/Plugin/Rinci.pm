@@ -1,8 +1,5 @@
 package Pod::Weaver::Plugin::Rinci;
 
-# DATE
-# VERSION
-
 use 5.010001;
 use Moose;
 with 'Pod::Weaver::Role::AddTextToSection';
@@ -11,6 +8,11 @@ with 'Pod::Weaver::Role::Section';
 use Perinci::Access::Perl;
 use Perinci::To::POD;
 use Sub::Identify qw(sub_fullname);
+
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
 
 our $pa = Perinci::Access::Perl->new;
 
@@ -53,7 +55,7 @@ sub _process_module {
 
     my $exports = {};
     {
-        no strict 'refs';
+        no strict 'refs'; ## no critic: TestingAndDebugging::ProhibitNoStrict
 
         # we import specifically when module is using Exporter::Rinci as its
         # exporter, because Exporter::Rinci works by filling @EXPORT* variables
