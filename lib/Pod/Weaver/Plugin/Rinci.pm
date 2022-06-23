@@ -26,10 +26,21 @@ has exclude_files => (
     isa => 'Str',
 );
 
-sub _process_module {
-    require Require::Hook::Source::DzilBuild;
+# whether to use Require::Hook::Source::DzilBuild
+has use_require_hook_source_dzilbuild => (
+    is => 'rw',
+    isa => 'Bool',
+);
 
+sub _process_module {
     my ($self, $document, $input) = @_;
+
+    my $use_require_hook_source_dzilbuild =
+        $self->use_require_hook_source_dzilbuild //
+        $ENV{PERL_POD_WEAVER_PLUGIN_RINCI_USE_REQUIRE_HOOK_SOURCE_DZILBUILD} //
+        1;
+
+    require Require::Hook::Source::DzilBuild if $use_require_hook_source_dzilbuild;
 
     my $filename = $input->{filename};
     my ($file) = grep { $_->name eq $filename } @{ $input->{zilla}->files };
@@ -39,7 +50,7 @@ sub _process_module {
     my $package = $1;
     $package =~ s!/!::!g;
 
-    local @INC = (Require::Hook::Source::DzilBuild->new(zilla => $input->{zilla}, debug=>1), @INC);
+    local @INC = (Require::Hook::Source::DzilBuild->new(zilla => $input->{zilla}, debug=>1), @INC) if $use_require_hook_source_dzilbuild;
 
     # force reload to get the recent version of module
     (my $package_pm = "$package.pm") =~ s!::!/!g;
@@ -328,6 +339,34 @@ Coderef C<subcommands> is not supported.
 
 To exclude a script from being processed, you can also put C<# NO_PWP_RINCI> in
 the script.
+
+
+=head1 CONFIGURATION
+
+=head2 exclude_modules
+
+String, a regex.
+
+=head2 exclude_files
+
+String, a regex.
+
+=head2 use_require_hook_source_dzilbuild
+
+Bool, default true.
+
+Since F<weaver.ini> does not provide something like C<@Filter> in F<dist.ini>,
+you can also use the environment variable
+C<PERL_POD_WEAVER_PLUGIN_RINCI_USE_REQUIRE_HOOK_SOURCE_DZILBUILD> to set the
+default value of this configuration option.
+
+
+=head1 ENVIRONMENT
+
+=head2 PERL_POD_WEAVER_PLUGIN_RINCI_USE_REQUIRE_HOOK_SOURCE_DZILBUILD
+
+Bool. Used to set the default for the C</use_require_hook_source_dzilbuild>
+configuration option.
 
 
 =head1 SEE ALSO
