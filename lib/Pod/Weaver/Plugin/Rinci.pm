@@ -32,12 +32,22 @@ has use_require_hook_source_dzilbuild => (
     isa => 'Bool',
 );
 
+# whether to force reloadding modules
+has force_reload => (
+    is => 'rw',
+    isa => 'Bool',
+);
+
 sub _process_module {
     my ($self, $document, $input) = @_;
 
     my $use_require_hook_source_dzilbuild =
         $self->use_require_hook_source_dzilbuild //
         $ENV{PERL_POD_WEAVER_PLUGIN_RINCI_USE_REQUIRE_HOOK_SOURCE_DZILBUILD} //
+        1;
+    my $force_reload =
+        $self->force_reload //
+        $ENV{PERL_POD_WEAVER_PLUGIN_RINCI_FORCE_RELOAD} //
         1;
 
     require Require::Hook::Source::DzilBuild if $use_require_hook_source_dzilbuild;
@@ -54,7 +64,7 @@ sub _process_module {
 
     # force reload to get the recent version of module
     (my $package_pm = "$package.pm") =~ s!::!/!g;
-    delete $INC{$package_pm};
+    delete $INC{$package_pm} if $force_reload;
 
     my $url = $package; $url =~ s!::!/!g; $url = "pl:/$url/";
     my $res = $pa->request(meta => $url);
@@ -360,6 +370,21 @@ you can also use the environment variable
 C<PERL_POD_WEAVER_PLUGIN_RINCI_USE_REQUIRE_HOOK_SOURCE_DZILBUILD> to set the
 default value of this configuration option.
 
+=head2 force_reload
+
+Bool, default true.
+
+Whether to force reloading modules, to get the latest version (e.g. a module is
+already loaded by another plugin but then might get modified; when we are
+processing the module we might want to reload to get the latest version.
+
+But this reloading sometimes causes the module to fail to compile, so this
+option exists.
+
+Since F<weaver.ini> does not provide something like C<@Filter> in F<dist.ini>,
+you can also use the environment variable
+C<PERL_POD_WEAVER_PLUGIN_RINCI_FORCE_RELOAD> to set the default value of this
+configuration option.
 
 =head1 ENVIRONMENT
 
@@ -367,6 +392,10 @@ default value of this configuration option.
 
 Bool. Used to set the default for the C</use_require_hook_source_dzilbuild>
 configuration option.
+
+=head2 PERL_POD_WEAVER_PLUGIN_RINCI_FORCE_RELOAD
+
+Bool. Used to set the default for the C</force_reload> configuration option.
 
 
 =head1 SEE ALSO
