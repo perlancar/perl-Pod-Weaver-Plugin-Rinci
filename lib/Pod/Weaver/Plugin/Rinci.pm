@@ -27,7 +27,7 @@ has exclude_files => (
 );
 
 sub _process_module {
-    require Require::Hook::DzilBuild;
+    require Require::Hook::Source::DzilBuild;
 
     my ($self, $document, $input) = @_;
 
@@ -39,7 +39,7 @@ sub _process_module {
     my $package = $1;
     $package =~ s!/!::!g;
 
-    local @INC = (Require::Hook::DzilBuild->new(zilla => $input->{zilla}, debug=>1), @INC);
+    local @INC = (Require::Hook::Source::DzilBuild->new(zilla => $input->{zilla}, debug=>1), @INC);
 
     # force reload to get the recent version of module
     (my $package_pm = "$package.pm") =~ s!::!/!g;
@@ -132,7 +132,7 @@ sub _process_script {
     require File::Temp;
     require Perinci::CmdLine::POD;
     require Perinci::CmdLine::Util;
-    #require Require::Hook::DzilBuild; # script is dumped in a different process, so doesn't work here
+    #require Require::Hook::Source::DzilBuild; # script is dumped in a different process, so doesn't work here
 
     my ($self, $document, $input) = @_;
     # dump to temporary file first because the file might not be an ondisk file
