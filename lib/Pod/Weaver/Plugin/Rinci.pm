@@ -240,8 +240,13 @@ sub weave_section {
     if ($filename =~ m!^lib/(.+)\.pm$!) {
         $package = $1;
         $package =~ s!/!::!g;
+        my $re;
         if (defined $self->exclude_modules) {
-            my $re = $self->exclude_modules;
+            $re = $self->exclude_modules;
+        } elsif ($ENV{PERL_POD_WEAVER_PLUGIN_RINCI_EXCLUDE_MODULES}) {
+            $re = $ENV{PERL_POD_WEAVER_PLUGIN_RINCI_EXCLUDE_MODULES};
+        }
+        if ($re) {
             eval { $re = qr/$re/ };
             $@ and die "Invalid regex in exclude_modules: $re";
             if ($package =~ $re) {
@@ -397,6 +402,10 @@ configuration option.
 
 Bool. Used to set the default for the C</force_reload> configuration option.
 
+=head2 PERL_POD_WEAVER_PLUGIN_RINCI_EXCLUDE_MODULES
+
+String (regex pattern). Used to set the default value for the
+C</exclude_modules> configuration option.
 
 =head1 SEE ALSO
 
