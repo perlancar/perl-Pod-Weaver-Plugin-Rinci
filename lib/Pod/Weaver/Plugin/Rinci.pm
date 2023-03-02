@@ -3,7 +3,7 @@ package Pod::Weaver::Plugin::Rinci;
 use 5.010001;
 use Moose;
 with 'Pod::Weaver::Role::AddTextToSection';
-with 'Pod::Weaver::Role::ReplaceCommand';
+#with 'Pod::Weaver::Role::ReplaceCommand'; # not ready
 with 'Pod::Weaver::Role::Section';
 
 use Perinci::Access::Perl;
@@ -217,9 +217,10 @@ sub _process_script {
             });
     }
 
-    if ($res->[3]{'func.usage'}) {
-        $modified++ if $self->replace_command($document, 'head2', qr/usage/, $res->[3]{'func.usage'}, {ignore=>1});
-    }
+    # not ready
+    #if ($res->[3]{'func.usage'}) {
+    #    $modified++ if $self->replace_command($document, 'head2', qr/usage/, $res->[3]{'func.usage'}, {ignore=>1});
+    #}
 
     if ($modified) {
         $self->log(["added POD sections from Rinci metadata for script '%s'", $input->{filename}]);
