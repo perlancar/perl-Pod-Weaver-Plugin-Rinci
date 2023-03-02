@@ -42,17 +42,6 @@ has force_reload => (
 sub _process_module {
     my ($self, $document, $input) = @_;
 
-    my $use_require_hook_source_dzilbuild =
-        $self->use_require_hook_source_dzilbuild //
-        $ENV{PERL_POD_WEAVER_PLUGIN_RINCI_USE_REQUIRE_HOOK_SOURCE_DZILBUILD} //
-        1;
-    my $force_reload =
-        $self->force_reload //
-        $ENV{PERL_POD_WEAVER_PLUGIN_RINCI_FORCE_RELOAD} //
-        1;
-
-    require Require::Hook::Source::DzilBuild if $use_require_hook_source_dzilbuild;
-
     my $filename = $input->{filename};
     my ($file) = grep { $_->name eq $filename } @{ $input->{zilla}->files };
 
@@ -61,15 +50,40 @@ sub _process_module {
     my $package = $1;
     $package =~ s!/!::!g;
 
-    local @INC = (Require::Hook::Source::DzilBuild->new(zilla => $input->{zilla}, debug=>1), @INC) if $use_require_hook_source_dzilbuild;
+    my $use_require_hook_source_dzilbuild =
+        $self->use_require_hook_source_dzilbuild //
+        $ENV{PERL_POD_WEAVER_PLUGIN_RINCI_USE_REQUIRE_HOOK_SOURCE_DZILBUILD} //
+        1;
+    my $force_reload =
+        $self->force_reload //
+        $ENV{PERL_POD_WEAVER_PLUGIN_RINCI_FORCE_RELOAD} //
+        $package =~ /^(Dist::Zilla|Pod::Weaver)::/ ? 0:1;
+
+    require Require::Hook::Source::DzilBuild if $use_require_hook_source_dzilbuild;
+
+    # always add 'lib' because this is what we normally always want
+    local @INC = ("lib", @INC);
 
     # force reload to get the recent version of module
     (my $package_pm = "$package.pm") =~ s!::!/!g;
     delete $INC{$package_pm} if $force_reload;
 
-    my $url = $package; $url =~ s!::!/!g; $url = "pl:/$url/";
-    my $res = $pa->request(meta => $url);
-    die "Can't meta $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
+    my ($url, $res);
+    for my $attempt (1..2) {
+        # first attempt is with Require::Hook::Source::DzilBuild, second attempt
+        # without
+        next if $attempt == 1 && !$use_require_hook_source_dzilbuild;
+        $self->log_debug("Attempt loading $package ".($attempt == 1 ? "with Require::Hook::Source::DzilBuild" : "with normal \@INC"));
+        local @INC = (Require::Hook::Source::DzilBuild->new(zilla => $input->{zilla}, debug=>1), @INC) if $attempt == 1;
+
+        $url = $package; $url =~ s!::!/!g; $url = "pl:/$url/";
+        eval { $res = $pa->request(meta => $url) };
+        $self->log_debug("Loading failed: $@") if $@;
+        last if !$@ && $res->[0] == 200;
+    }
+
+    die "Failed loading $package after attempt(s)" unless $res->[0] == 200;
+
     my $meta = $res->[2];
     $res = $pa->request(child_metas => $url);
     die "Can't child_metas $url: $res->[0] - $res->[1]" unless $res->[0] == 200;
