@@ -231,13 +231,20 @@ sub weave_section {
 
     my $filename = $input->{filename};
 
-    if (defined $self->exclude_files) {
-        my $re = $self->exclude_files;
-        eval { $re = qr/$re/ };
-        $@ and die "Invalid regex in exclude_files: $re";
-        if ($filename =~ $re) {
-            $self->log_debug(["skipped file '%s' (matched exclude_files)", $filename]);
-            return;
+    {
+        my $re;
+        if (defined $self->exclude_files) {
+            $re = $self->exclude_files;
+        } elsif ($ENV{PERL_POD_WEAVER_PLUGIN_RINCI_EXCLUDE_FILES}) {
+            $re = $ENV{PERL_POD_WEAVER_PLUGIN_RINCI_EXCLUDE_FILES};
+        }
+        if ($re) {
+            eval { $re = qr/$re/ };
+            $@ and die "Invalid regex in exclude_files: $re";
+            if ($filename =~ $re) {
+                $self->log_debug(["skipped file '%s' (matched exclude_files)", $filename]);
+                return;
+            }
         }
     }
 
@@ -411,6 +418,12 @@ Bool. Used to set the default for the C</force_reload> configuration option.
 
 String (regex pattern). Used to set the default value for the
 C</exclude_modules> configuration option.
+
+=head2 PERL_POD_WEAVER_PLUGIN_RINCI_EXCLUDE_FILES
+
+String (regex pattern). Used to set the default value for the
+C</exclude_files> configuration option.
+
 
 =head1 SEE ALSO
 
